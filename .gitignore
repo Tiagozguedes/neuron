@@ -1,0 +1,16 @@
+# Ambientes e dependências locais
+.venv/
+env/
+*.pyc
+__pycache__/
+exports/
+
+# Arquivos de configuração sensíveis
+.env
+.env.*
+
+# Sistemas operacionais/IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

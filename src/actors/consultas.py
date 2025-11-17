@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from connect.connect import run_query
-from utils import deseja_voltar, limpar_tela, pausar, solicitar_confirmacao
+from utils import deseja_voltar, input_opcao, limpar_tela, pausar, solicitar_confirmacao, titulo
 
 EXPORT_DIR = Path("exports")
 
@@ -18,30 +18,26 @@ def menu_consultas() -> None:
     """Menu principal para as consultas exigidas no projeto."""
     while True:
         limpar_tela()
-        print("=== Consultas e Relatórios ===")
-        print("1. Distribuição de colaboradores por departamento")
-        print("2. Emoções mais registradas")
-        print("3. Panorama de bem-estar por departamento")
+        titulo("Relatórios e Consultas")
+        print("1. Histórico emocional dos colaboradores")
+        print("2. Relatórios agregados por departamento")
+        print("3. Relatórios organizacionais")
         print("0. Voltar")
-        entrada = input("\nEscolha: ").strip()
-        if deseja_voltar(entrada):
+        opcao = input_opcao("\nEscolha uma opção: ", ("1", "2", "3", "0"))
+        if opcao == "0":
             break
-        opcao = entrada
         if opcao == "1":
-            _consulta_colaboradores_por_departamento()
-        elif opcao == "2":
             _consulta_emocoes_recorrentes()
+        elif opcao == "2":
+            _consulta_colaboradores_por_departamento()
         elif opcao == "3":
             _consulta_metricas_por_departamento()
-        else:
-            print("Opção inválida.")
-            pausar()
 
 
 def _consulta_colaboradores_por_departamento() -> None:
     """Mostra quantidade de usuários (ativos/inativos) em cada departamento."""
     limpar_tela()
-    print("--- Distribuição de Colaboradores ---\n")
+    titulo("Relatórios agregados por departamento")
     linhas = run_query(
         """
         SELECT d.NOME_DEPARTAMENTO        AS nome_departamento,
@@ -71,7 +67,7 @@ def _consulta_colaboradores_por_departamento() -> None:
 def _consulta_emocoes_recorrentes() -> None:
     """Apresenta o ranking das emoções mais registradas pela IA."""
     limpar_tela()
-    print("--- Emoções Mais Registradas ---\n")
+    titulo("Histórico emocional dos colaboradores")
     linhas = run_query(
         """
         SELECT e.NM_EMOCAO AS emocao,
@@ -99,7 +95,7 @@ def _consulta_emocoes_recorrentes() -> None:
 def _consulta_metricas_por_departamento() -> None:
     """Exibe médias das métricas de bem-estar por departamento."""
     limpar_tela()
-    print("--- Panorama de Bem-estar ---\n")
+    titulo("Relatórios organizacionais")
     linhas = run_query(
         """
         SELECT d.NOME_DEPARTAMENTO AS nome_departamento,

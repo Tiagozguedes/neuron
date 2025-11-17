@@ -47,6 +47,7 @@ Neuron nasceu da necessidade das empresas brasileiras de medir e cuidar da saúd
    export NEURON_API_KEY=<token_se_existir>
    ```
    > **Windows:** `setx NOME_VARIAVEL valor` grava permanentemente. Para sessões temporárias use `set NOME=valor` (CMD) ou `$env:NOME="valor"` (PowerShell).
+   > `NEURON_API_KEY` é opcional e só precisa ser definido se o endpoint exigir autenticação Bearer.
 
 ## Executando
 ### 1. Menu administrativo (CRUD + relatórios)
@@ -64,7 +65,7 @@ PYTHONPATH=src python -m actors.checkins
 ```
 1. Informe o ID do colaborador já cadastrado.
 2. Escreva o relato emocional (múltiplas linhas).
-3. Aplique ou rejeite o relatório retornado pela IA. Ao confirmar, os dados são gravados em `T_NRON_RESP_FORMULARIO` e `T_NRON_REGIST_EMOCAO`.
+3. O CLI envia o relato para `https://neuron-ai-v1yi.onrender.com/api/v1/analises-emocionais` (ou para o endpoint configurado em `NEURON_API_ENDPOINT`), exibe o relatório retornado pela IA e, ao confirmar, grava os dados em `T_NRON_RESP_FORMULARIO` e `T_NRON_REGIST_EMOCAO`.
 
 ## Estrutura dos módulos
 | Pasta/Arquivo | Papel no projeto |

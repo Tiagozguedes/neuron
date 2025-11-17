@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import platform
 from decimal import Decimal
+from typing import Sequence
 
 _VOLTAR_KEYWORDS = {"0", "voltar", "sair", "exit", "quit", "retornar", "cancelar", "back"}
 
@@ -15,27 +16,53 @@ class OperacaoCancelada(Exception):
 
 def limpar_tela() -> None:
     """Limpa o terminal de forma cross-platform."""
-    # Cada CLI chama antes de exibir menus para evitar poluição visual.
     comando = "cls" if platform.system() == "Windows" else "clear"
     os.system(comando)
 
 
 def pausar(mensagem: str = "Pressione Enter para continuar...") -> None:
     """Pausa a execução até o usuário confirmar."""
-    # Garante que o usuário leia mensagens antes de voltar ao menu.
     input(f"\n{mensagem}")
 
 
+def titulo(texto: str) -> None:
+    """Imprime um título padronizado para seções do menu."""
+    barra = "-" * max(len(texto) + 10, 32)
+    print(f"{barra}\n{texto.upper():^{len(barra)}}\n{barra}")
+
+
+def confirmar_acao(msg: str = "Confirmar operação? (S/N): ") -> bool:
+    """Solicita confirmação explícita (S/N) e só aceita respostas válidas."""
+    while True:
+        resposta = input(msg).strip().lower()
+        if resposta in {"s", "sim"}:
+            return True
+        if resposta in {"n", "nao", "não"}:
+            return False
+        print("Por favor, responda com S ou N.")
+
+
 def solicitar_confirmacao(pergunta: str) -> bool:
-    """Solicita confirmação simples (s/n)."""
-    # Padrão para operações destrutivas, evitando exclusões acidentais.
-    resposta = input(f"{pergunta} (s/n): ").strip().lower()
-    return resposta == "s"
+    """Compatibilidade com chamadas antigas de confirmação."""
+    return confirmar_acao(f"{pergunta} (S/N): ")
 
 
 def deseja_voltar(valor: str) -> bool:
     """Identifica se o usuário digitou um comando de retorno."""
     return valor.strip().lower() in _VOLTAR_KEYWORDS
+
+
+def input_opcao(mensagem: str, opcoes_validas: Sequence[str]) -> str:
+    """Solicita uma opção e garante que esteja no conjunto permitido."""
+    normalizadas = {opcao.strip().lower(): opcao for opcao in opcoes_validas}
+    while True:
+        escolha = input(mensagem).strip()
+        if deseja_voltar(escolha) and "0" in opcoes_validas:
+            return "0"
+        chave = escolha.lower()
+        if chave in normalizadas:
+            return normalizadas[chave]
+        print("Opção inválida. Tente novamente.")
 
 
 def _prompt(mensagem: str) -> str:

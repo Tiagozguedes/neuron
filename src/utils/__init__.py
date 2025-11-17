@@ -2,13 +2,16 @@
 
 from .helpers import (
     OperacaoCancelada,
+    confirmar_acao,
     deseja_voltar,
+    input_opcao,
     limpar_tela,
     pausar,
     solicitar_confirmacao,
     solicitar_decimal,
     solicitar_inteiro,
     solicitar_texto,
+    titulo,
 )
 
 __all__ = [
@@ -16,7 +19,10 @@ __all__ = [
     "pausar",
     "solicitar_confirmacao",
     "deseja_voltar",
+    "titulo",
+    "input_opcao",
     "OperacaoCancelada",
+    "confirmar_acao",
     "solicitar_texto",
     "solicitar_inteiro",
     "solicitar_decimal",

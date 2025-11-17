@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from connect.connect import run_query
-from utils import limpar_tela, pausar, solicitar_confirmacao
+from utils import deseja_voltar, limpar_tela, pausar, solicitar_confirmacao
 
 EXPORT_DIR = Path("exports")
 
@@ -23,9 +23,10 @@ def menu_consultas() -> None:
         print("2. Emoções mais registradas")
         print("3. Panorama de bem-estar por departamento")
         print("0. Voltar")
-        opcao = input("\nEscolha: ").strip()
-        if opcao == "0":
+        entrada = input("\nEscolha: ").strip()
+        if deseja_voltar(entrada):
             break
+        opcao = entrada
         if opcao == "1":
             _consulta_colaboradores_por_departamento()
         elif opcao == "2":

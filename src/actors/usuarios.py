@@ -6,14 +6,63 @@ from datetime import date, datetime
 
 from connect.connect import run_execute, run_query
 from db_utils import buscar_por_id, registro_existe
-from utils import limpar_tela, pausar, solicitar_confirmacao
+from utils import (
+    OperacaoCancelada,
+    limpar_tela,
+    pausar,
+    solicitar_confirmacao,
+    solicitar_inteiro,
+    solicitar_texto,
+)
 
 TABELA = "T_NRON_USUARIO"
+STATUS_LABELS = {"A": "Ativo", "I": "Inativo"}
+
+
+def _mostrar_opcoes_acesso() -> None:
+    linhas = run_query(
+        "SELECT ID_ACESSO, TP_ACESSO, DS_ACESSO FROM T_NRON_ACESSO ORDER BY ID_ACESSO",
+        {},
+    )
+    if not linhas:
+        print("Nenhum tipo de acesso cadastrado. Use o menu 3 para criar antes de prosseguir.")
+        return
+    print("\nTipos de acesso disponíveis:")
+    for linha in linhas:
+        print(f"  {linha['id_acesso']:>3} | {linha['tp_acesso']:<15} | {linha['ds_acesso']}")
+
+
+def _mostrar_opcoes_departamento() -> None:
+    linhas = run_query(
+        "SELECT ID_DEPARTAMENTO, NOME_DEPARTAMENTO FROM T_NRON_DEPARTAMENTO ORDER BY NOME_DEPARTAMENTO",
+        {},
+    )
+    if not linhas:
+        print("Nenhum departamento cadastrado. Use o menu 2 para criar antes de prosseguir.")
+        return
+    print("\nDepartamentos disponíveis:")
+    for linha in linhas:
+        print(f"  {linha['id_departamento']:>3} | {linha['nome_departamento']}")
 
 
 def _parse_data(valor: str) -> date:
-    # Converte string no formato YYYY-MM-DD para objeto date.
-    return datetime.strptime(valor, "%Y-%m-%d").date()
+    # Converte string no formato DDMMYYYY para objeto date.
+    valor = valor.strip()
+    if len(valor) != 8 or not valor.isdigit():
+        raise ValueError("Informe a data no formato DDMMYYYY (ex.: 01012024).")
+    dia = int(valor[0:2])
+    mes = int(valor[2:4])
+    ano = int(valor[4:8])
+    return datetime(ano, mes, dia).date()
+
+
+def _solicitar_status(mensagem: str, padrao: str = "A") -> str:
+    """Solicita status e valida a entrada para evitar abreviações confusas."""
+    while True:
+        resposta = solicitar_texto(mensagem, padrao=padrao, obrigatorio=False).strip().upper()
+        if resposta in STATUS_LABELS:
+            return resposta
+        print("Por favor, informe 'A' para Ativo ou 'I' para Inativo.")
 
 
 def cadastrar_usuario() -> None:
@@ -21,21 +70,24 @@ def cadastrar_usuario() -> None:
     try:
         limpar_tela()
         print("--- Cadastro de Usuário ---")
-        usuario_id = int(input("ID do usuário: ").strip())
+        print("Digite 'voltar' a qualquer momento para cancelar e retornar ao menu.\n")
+        usuario_id = solicitar_inteiro("ID do usuário")
         if registro_existe(TABELA, "ID_USUARIO", usuario_id):
             print("ID já cadastrado.")
             return
-        nome = input("Nome completo: ").strip().title()
-        email = input("E-mail corporativo: ").strip().lower()
-        senha = input("Senha (hash): ").strip()
-        status = input("Status (A/I): ").strip().upper()[:1] or "A"
-        data_input = input("Data de cadastro (YYYY-MM-DD) [hoje]: ").strip()
+        nome = solicitar_texto("Nome completo do colaborador").title()
+        email = solicitar_texto("E-mail corporativo (login)").lower()
+        senha = solicitar_texto("Senha (hash) a ser armazenada")
+        status = _solicitar_status("Situação do usuário [A=Ativo, I=Inativo] (padrão A)")
+        data_input = solicitar_texto("Data de cadastro (formato DDMMYYYY) [hoje]", obrigatorio=False)
         data_cadastro = _parse_data(data_input) if data_input else date.today()
-        id_acesso = int(input("ID do tipo de acesso: ").strip())
+        _mostrar_opcoes_acesso()
+        id_acesso = solicitar_inteiro("ID do tipo de acesso listado acima")
         if not registro_existe("T_NRON_ACESSO", "ID_ACESSO", id_acesso):
             print("Tipo de acesso inexistente.")
             return
-        id_depto = int(input("ID do departamento: ").strip())
+        _mostrar_opcoes_departamento()
+        id_depto = solicitar_inteiro("ID do departamento listado acima")
         if not registro_existe("T_NRON_DEPARTAMENTO", "ID_DEPARTAMENTO", id_depto):
             print("Departamento inexistente.")
             return
@@ -61,6 +113,8 @@ def cadastrar_usuario() -> None:
             },
         )
         print("Usuário cadastrado!")
+    except OperacaoCancelada:
+        print("Operação cancelada pelo usuário.")
     except Exception as exc:
         print(f"Erro ao cadastrar usuário: {exc}")
     finally:
@@ -90,9 +144,10 @@ def listar_usuarios() -> None:
             print("Nenhum usuário cadastrado.")
             return
         for linha in linhas:
+            status_legivel = STATUS_LABELS.get(linha["stt_usuario"], linha["stt_usuario"])
             print(
                 f"{linha['id_usuario']:>3} | {linha['nome']:<25} | {linha['em_usuario']:<25} | "
-                f"Status: {linha['stt_usuario']} | Cadastro: {linha['dt_cadastro']}"
+                f"Status: {status_legivel} | Cadastro: {linha['dt_cadastro']}"
             )
     except Exception as exc:
         print(f"Erro ao listar usuários: {exc}")
@@ -105,16 +160,34 @@ def atualizar_usuario() -> None:
     try:
         limpar_tela()
         print("--- Atualizar Usuário ---")
-        usuario_id = int(input("ID do usuário: ").strip())
+        print("Digite 'voltar' a qualquer momento para cancelar e retornar ao menu.\n")
+        usuario_id = solicitar_inteiro("ID do usuário")
         usuario = buscar_por_id(TABELA, "ID_USUARIO", usuario_id)
         if not usuario:
             print("Usuário não encontrado.")
             return
-        novo_nome = input(f"Nome atual ({usuario['nome']}): ").strip() or usuario["nome"]
-        novo_status = input(f"Status atual ({usuario['stt_usuario']}): ").strip() or usuario["stt_usuario"]
-        novo_acesso = input(f"ID acesso atual ({usuario['id_acesso']}): ").strip() or usuario["id_acesso"]
-        novo_depto = input(f"ID depto atual ({usuario['id_departamento']}): ").strip() or usuario["id_departamento"]
-        nova_senha = input("Nova senha (hash) [Enter para manter]: ").strip() or usuario["sen_hash_usuario"]
+        novo_nome = solicitar_texto(
+            f"Nome atual ({usuario['nome']}) [Enter para manter]", padrao=usuario["nome"], obrigatorio=False
+        )
+        status_msg = (
+            f"Situação atual ({STATUS_LABELS.get(usuario['stt_usuario'], usuario['stt_usuario'])}) "
+            "[A=Ativo, I=Inativo]: "
+        )
+        novo_status = _solicitar_status(status_msg, usuario["stt_usuario"])
+        print("\nReferência de tipos de acesso cadastrados:")
+        _mostrar_opcoes_acesso()
+        novo_acesso = solicitar_inteiro(
+            f"ID de acesso atual ({usuario['id_acesso']}) [Enter para manter]", padrao=int(usuario["id_acesso"])
+        )
+        print("\nReferência de departamentos cadastrados:")
+        _mostrar_opcoes_departamento()
+        novo_depto = solicitar_inteiro(
+            f"ID do departamento atual ({usuario['id_departamento']}) [Enter para manter]",
+            padrao=int(usuario["id_departamento"]),
+        )
+        nova_senha = solicitar_texto(
+            "Nova senha (hash) [Enter para manter a atual]", padrao=usuario["sen_hash_usuario"], obrigatorio=False
+        )
         run_execute(
             """
             UPDATE T_NRON_USUARIO
@@ -135,6 +208,8 @@ def atualizar_usuario() -> None:
             },
         )
         print("Usuário atualizado.")
+    except OperacaoCancelada:
+        print("Operação cancelada pelo usuário.")
     except Exception as exc:
         print(f"Erro ao atualizar usuário: {exc}")
     finally:
@@ -146,7 +221,8 @@ def excluir_usuario() -> None:
     try:
         limpar_tela()
         print("--- Excluir Usuário ---")
-        usuario_id = int(input("ID do usuário: ").strip())
+        print("Digite 'voltar' a qualquer momento para cancelar e retornar ao menu.\n")
+        usuario_id = solicitar_inteiro("ID do usuário")
         if not buscar_por_id(TABELA, "ID_USUARIO", usuario_id):
             print("Usuário não encontrado.")
             return
@@ -158,6 +234,8 @@ def excluir_usuario() -> None:
             print("Usuário excluído.")
         else:
             print("Nenhum registro removido.")
+    except OperacaoCancelada:
+        print("Operação cancelada pelo usuário.")
     except Exception as exc:
         print(f"Erro ao excluir usuário: {exc}")
     finally:

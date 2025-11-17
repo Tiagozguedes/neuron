@@ -13,7 +13,7 @@ try:
 except ModuleNotFoundError:  # pragma: no cover
     requests = None  # type: ignore[assignment]
 
-DEFAULT_ENDPOINT = "http://localhost:8080/api/v1/analises-emocionais"
+DEFAULT_ENDPOINT = "https://neuron-ai-v1yi.onrender.com/api/v1/analises-emocionais"
 
 
 @dataclass(slots=True)

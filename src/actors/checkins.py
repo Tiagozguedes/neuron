@@ -7,7 +7,15 @@ from datetime import datetime, timezone
 from connect.connect import run_execute, run_query
 from db_utils import proximo_id, registro_existe
 from services.analise_emocional import EmotionReport, analisar_texto
-from utils import limpar_tela, pausar, solicitar_confirmacao
+from utils import (
+    OperacaoCancelada,
+    deseja_voltar,
+    limpar_tela,
+    pausar,
+    solicitar_confirmacao,
+    solicitar_inteiro,
+    solicitar_texto,
+)
 
 
 def realizar_checkin_emocional() -> None:
@@ -16,7 +24,8 @@ def realizar_checkin_emocional() -> None:
     try:
         limpar_tela()
         print("=== Check-in emocional com IA Neuron ===\n")
-        usuario_id = int(input("ID do colaborador: ").strip())
+        print("Digite 'voltar' a qualquer momento para cancelar e retornar ao menu.\n")
+        usuario_id = solicitar_inteiro("ID do colaborador")
         if not registro_existe("T_NRON_USUARIO", "ID_USUARIO", usuario_id):
             print("Usuário não encontrado.")
             return
@@ -37,6 +46,8 @@ def realizar_checkin_emocional() -> None:
         registro_id = _criar_registro_emocao(emocao_id, relatorio)
         resposta_id = _persistir_resposta(usuario_id, texto, relatorio, registro_id)
         print(f"\nCheck-in registrado! Resposta #{resposta_id} vinculada ao registro emocional #{registro_id}.")
+    except OperacaoCancelada:
+        print("Operação cancelada pelo usuário.")
     except Exception as exc:
         print(f"Erro ao processar o check-in: {exc}")
     finally:
@@ -47,11 +58,13 @@ def _coletar_relato() -> str:
     # Lê múltiplas linhas até o usuário enviar Enter vazio e devolve o texto consolidado.
     print(
         "\nConte como está seu momento (use frases completas). "
-        "Pressione Enter em branco para finalizar.\n",
+        "Pressione Enter em branco para finalizar ou digite 'voltar' para cancelar.\n",
     )
     linhas: list[str] = []
     while True:
         linha = input("> ")
+        if deseja_voltar(linha):
+            raise OperacaoCancelada()
         if not linha.strip():
             break
         linhas.append(linha.strip())
@@ -189,7 +202,10 @@ def _resolver_emocao_id(relatorio: EmotionReport) -> int | None:
         "Você pode informar manualmente o ID de uma emoção existente.",
         sep="\n",
     )
-    resposta = input("ID da emoção (Enter para cancelar): ").strip()
+    try:
+        resposta = solicitar_texto("ID da emoção [Enter para cancelar]", obrigatorio=False)
+    except OperacaoCancelada:
+        return None
     if not resposta:
         return None
     try:

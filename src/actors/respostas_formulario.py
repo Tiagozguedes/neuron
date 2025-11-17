@@ -6,14 +6,17 @@ from decimal import Decimal
 
 from connect.connect import run_execute, run_query
 from db_utils import buscar_por_id, registro_existe
-from utils import limpar_tela, pausar, solicitar_confirmacao
+from utils import (
+    OperacaoCancelada,
+    limpar_tela,
+    pausar,
+    solicitar_confirmacao,
+    solicitar_decimal,
+    solicitar_inteiro,
+    solicitar_texto,
+)
 
 TABELA = "T_NRON_RESP_FORMULARIO"
-
-
-def _decimal(valor: str) -> Decimal:
-    # Normaliza entrada numérica (permite vírgula ou ponto) para Decimal.
-    return Decimal(valor.replace(",", "."))
 
 
 def cadastrar_resposta_formulario() -> None:
@@ -21,24 +24,25 @@ def cadastrar_resposta_formulario() -> None:
     try:
         limpar_tela()
         print("--- Cadastro de Resposta de Formulário ---")
-        resposta_id = int(input("ID da resposta: ").strip())
+        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+        resposta_id = solicitar_inteiro("ID da resposta")
         if registro_existe(TABELA, "ID_RESPOSTA", resposta_id):
             print("ID já cadastrado.")
             return
-        data_resposta = input("Data da resposta (YYYY-MM-DD): ").strip()
-        motivacao = _decimal(input("Motivação (0-10): ").strip())
-        felicidade = _decimal(input("Felicidade (0-10): ").strip())
-        estresse = _decimal(input("Estresse (0-10): ").strip())
-        observacao = input("Observações: ").strip()
-        saude_mental = _decimal(input("Saúde mental (0-10): ").strip())
-        probabilidade = _decimal(input("Confiança do modelo (0-100): ").strip())
-        modelo_versao = input("Versão do modelo: ").strip()
-        data_analise = input("Data da análise (YYYY-MM-DD): ").strip()
-        id_usuario = int(input("ID do usuário: ").strip())
+        data_resposta = solicitar_texto("Data da resposta (YYYY-MM-DD)")
+        motivacao = solicitar_decimal("Motivação (0-10)")
+        felicidade = solicitar_decimal("Felicidade (0-10)")
+        estresse = solicitar_decimal("Estresse (0-10)")
+        observacao = solicitar_texto("Observações")
+        saude_mental = solicitar_decimal("Saúde mental (0-10)")
+        probabilidade = solicitar_decimal("Confiança do modelo (0-100)")
+        modelo_versao = solicitar_texto("Versão do modelo")
+        data_analise = solicitar_texto("Data da análise (YYYY-MM-DD)")
+        id_usuario = solicitar_inteiro("ID do usuário")
         if not registro_existe("T_NRON_USUARIO", "ID_USUARIO", id_usuario):
             print("Usuário não encontrado.")
             return
-        id_registro = int(input("ID do registro de emoção: ").strip())
+        id_registro = solicitar_inteiro("ID do registro de emoção")
         if not registro_existe("T_NRON_REGIST_EMOCAO", "ID_REGIST_EMOCAO", id_registro):
             print("Registro de emoção inexistente.")
             return
@@ -72,6 +76,8 @@ def cadastrar_resposta_formulario() -> None:
             },
         )
         print("Resposta cadastrada.")
+    except OperacaoCancelada:
+        print("Operação cancelada pelo usuário.")
     except Exception as exc:
         print(f"Erro ao cadastrar resposta: {exc}")
     finally:
@@ -120,22 +126,50 @@ def atualizar_resposta_formulario() -> None:
     try:
         limpar_tela()
         print("--- Atualizar Resposta de Formulário ---")
-        resposta_id = int(input("ID da resposta: ").strip())
+        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+        resposta_id = solicitar_inteiro("ID da resposta")
         resposta = buscar_por_id(TABELA, "ID_RESPOSTA", resposta_id)
         if not resposta:
             print("Resposta não encontrada.")
             return
-        novo_status_mot = input(f"Motivação atual ({resposta['mot_resposta']}): ").strip() or resposta["mot_resposta"]
-        nova_felicidade = input(f"Felicidade atual ({resposta['fel_resposta']}): ").strip() or resposta["fel_resposta"]
-        novo_estresse = input(f"Estresse atual ({resposta['est_resposta']}): ").strip() or resposta["est_resposta"]
-        nova_observacao = input(f"Observação atual ({resposta['obs_resposta']}): ").strip() or resposta["obs_resposta"]
-        nova_saude = input(f"Saúde mental atual ({resposta['sau_men_resposta']}): ").strip() or resposta["sau_men_resposta"]
-        nova_prob = input(f"Confiança atual ({resposta['prob_resposta']}): ").strip() or resposta["prob_resposta"]
-        novo_modelo = input(f"Modelo atual ({resposta['mod_ver_resposta']}): ").strip() or resposta["mod_ver_resposta"]
+        novo_status_mot = solicitar_decimal(
+            f"Motivação atual ({resposta['mot_resposta']}) [Enter para manter]",
+            padrao=Decimal(str(resposta["mot_resposta"])),
+        )
+        nova_felicidade = solicitar_decimal(
+            f"Felicidade atual ({resposta['fel_resposta']}) [Enter para manter]",
+            padrao=Decimal(str(resposta["fel_resposta"])),
+        )
+        novo_estresse = solicitar_decimal(
+            f"Estresse atual ({resposta['est_resposta']}) [Enter para manter]",
+            padrao=Decimal(str(resposta["est_resposta"])),
+        )
+        nova_observacao = solicitar_texto(
+            f"Observação atual ({resposta['obs_resposta']}) [Enter para manter]",
+            padrao=resposta["obs_resposta"],
+            obrigatorio=False,
+        )
+        nova_saude = solicitar_decimal(
+            f"Saúde mental atual ({resposta['sau_men_resposta']}) [Enter para manter]",
+            padrao=Decimal(str(resposta["sau_men_resposta"])),
+        )
+        nova_prob = solicitar_decimal(
+            f"Confiança atual ({resposta['prob_resposta']}) [Enter para manter]",
+            padrao=Decimal(str(resposta["prob_resposta"])),
+        )
+        novo_modelo = solicitar_texto(
+            f"Modelo atual ({resposta['mod_ver_resposta']}) [Enter para manter]",
+            padrao=resposta["mod_ver_resposta"],
+            obrigatorio=False,
+        )
         data_anl_atual = resposta["dt_anl_resposta"]
         if hasattr(data_anl_atual, "strftime"):
             data_anl_atual = data_anl_atual.strftime("%Y-%m-%d")
-        nova_data_analise = input(f"Data análise atual ({data_anl_atual}): ").strip() or data_anl_atual
+        nova_data_analise = solicitar_texto(
+            f"Data análise atual ({data_anl_atual}) [Enter para manter]",
+            padrao=str(data_anl_atual),
+            obrigatorio=False,
+        )
         run_execute(
             """
             UPDATE T_NRON_RESP_FORMULARIO
@@ -162,6 +196,8 @@ def atualizar_resposta_formulario() -> None:
             },
         )
         print("Resposta atualizada.")
+    except OperacaoCancelada:
+        print("Operação cancelada pelo usuário.")
     except Exception as exc:
         print(f"Erro ao atualizar resposta: {exc}")
     finally:
@@ -173,7 +209,8 @@ def excluir_resposta_formulario() -> None:
     try:
         limpar_tela()
         print("--- Excluir Resposta de Formulário ---")
-        resposta_id = int(input("ID da resposta: ").strip())
+        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+        resposta_id = solicitar_inteiro("ID da resposta")
         if not buscar_por_id(TABELA, "ID_RESPOSTA", resposta_id):
             print("Resposta não encontrada.")
             return
@@ -185,6 +222,8 @@ def excluir_resposta_formulario() -> None:
             print("Resposta excluída.")
         else:
             print("Nenhuma linha afetada.")
+    except OperacaoCancelada:
+        print("Operação cancelada pelo usuário.")
     except Exception as exc:
         print(f"Erro ao excluir resposta: {exc}")
     finally:

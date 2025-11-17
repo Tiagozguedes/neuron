@@ -4,7 +4,14 @@ from __future__ import annotations
 
 from connect.connect import run_execute, run_query
 from db_utils import buscar_por_id, registro_existe
-from utils import limpar_tela, pausar, solicitar_confirmacao
+from utils import (
+    OperacaoCancelada,
+    limpar_tela,
+    pausar,
+    solicitar_confirmacao,
+    solicitar_inteiro,
+    solicitar_texto,
+)
 
 TABELA = "T_NRON_EMOCAO"
 
@@ -14,13 +21,14 @@ def cadastrar_emocao() -> None:
     try:
         limpar_tela()
         print("--- Cadastro de Emoção ---")
-        emocao_id = int(input("ID da emoção: ").strip())
+        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+        emocao_id = solicitar_inteiro("ID da emoção")
         if registro_existe(TABELA, "ID_EMOCAO", emocao_id):
             print("ID já cadastrado.")
             return
-        nome = input("Nome da emoção: ").strip().capitalize()
-        cor = input("Cor HEX (#RRGGBB): ").strip().upper()
-        categoria_id = int(input("ID da categoria: ").strip())
+        nome = solicitar_texto("Nome da emoção").capitalize()
+        cor = solicitar_texto("Cor HEX (#RRGGBB)").upper()
+        categoria_id = solicitar_inteiro("ID da categoria")
         run_execute(
             """
             INSERT INTO T_NRON_EMOCAO (ID_EMOCAO, NM_EMOCAO, COR_EMOCAO, ID_CATG_EMOCAO)
@@ -29,6 +37,8 @@ def cadastrar_emocao() -> None:
             {"id": emocao_id, "nome": nome, "cor": cor, "categoria": categoria_id},
         )
         print("Emoção cadastrada.")
+    except OperacaoCancelada:
+        print("Operação cancelada pelo usuário.")
     except Exception as exc:
         print(f"Erro ao cadastrar emoção: {exc}")
     finally:
@@ -63,14 +73,22 @@ def atualizar_emocao() -> None:
     try:
         limpar_tela()
         print("--- Atualizar Emoção ---")
-        emocao_id = int(input("ID da emoção: ").strip())
+        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+        emocao_id = solicitar_inteiro("ID da emoção")
         emocao = buscar_por_id(TABELA, "ID_EMOCAO", emocao_id)
         if not emocao:
             print("Emoção não encontrada.")
             return
-        novo_nome = input(f"Nome atual ({emocao['nm_emocao']}): ").strip() or emocao["nm_emocao"]
-        nova_cor = input(f"Cor atual ({emocao['cor_emocao']}): ").strip() or emocao["cor_emocao"]
-        nova_cat = input(f"Categoria atual ({emocao['id_catg_emocao']}): ").strip() or emocao["id_catg_emocao"]
+        novo_nome = solicitar_texto(
+            f"Nome atual ({emocao['nm_emocao']}) [Enter para manter]", padrao=emocao["nm_emocao"], obrigatorio=False
+        )
+        nova_cor = solicitar_texto(
+            f"Cor atual ({emocao['cor_emocao']}) [Enter para manter]", padrao=emocao["cor_emocao"], obrigatorio=False
+        ).upper()
+        nova_cat = solicitar_inteiro(
+            f"Categoria atual ({emocao['id_catg_emocao']}) [Enter para manter]",
+            padrao=int(emocao["id_catg_emocao"]),
+        )
         run_execute(
             """
             UPDATE T_NRON_EMOCAO
@@ -82,6 +100,8 @@ def atualizar_emocao() -> None:
             {"nome": novo_nome, "cor": nova_cor, "categoria": int(nova_cat), "id": emocao_id},
         )
         print("Emoção atualizada.")
+    except OperacaoCancelada:
+        print("Operação cancelada pelo usuário.")
     except Exception as exc:
         print(f"Erro ao atualizar emoção: {exc}")
     finally:
@@ -93,7 +113,8 @@ def excluir_emocao() -> None:
     try:
         limpar_tela()
         print("--- Excluir Emoção ---")
-        emocao_id = int(input("ID da emoção: ").strip())
+        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+        emocao_id = solicitar_inteiro("ID da emoção")
         if not buscar_por_id(TABELA, "ID_EMOCAO", emocao_id):
             print("Emoção não encontrada.")
             return
@@ -105,6 +126,8 @@ def excluir_emocao() -> None:
             print("Emoção excluída.")
         else:
             print("Nenhuma linha afetada.")
+    except OperacaoCancelada:
+        print("Operação cancelada pelo usuário.")
     except Exception as exc:
         print(f"Erro ao excluir emoção: {exc}")
     finally:

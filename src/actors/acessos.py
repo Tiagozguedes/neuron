@@ -4,7 +4,14 @@ from __future__ import annotations
 
 from connect.connect import run_execute, run_query
 from db_utils import buscar_por_id, registro_existe
-from utils import limpar_tela, pausar, solicitar_confirmacao
+from utils import (
+    OperacaoCancelada,
+    limpar_tela,
+    pausar,
+    solicitar_confirmacao,
+    solicitar_inteiro,
+    solicitar_texto,
+)
 
 TABELA = "T_NRON_ACESSO"
 
@@ -15,12 +22,13 @@ def cadastrar_acesso() -> None:
     try:
         limpar_tela()
         print("--- Cadastro de Tipo de Acesso ---")
-        id_acesso = int(input("ID do acesso: ").strip())
+        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+        id_acesso = solicitar_inteiro("ID do acesso")
         if registro_existe(TABELA, "ID_ACESSO", id_acesso):
             print("Erro: ID já cadastrado.")
             return
-        tipo = input("Tipo (FUNCIONARIO/GESTOR/RH_CLEVEL): ").strip().upper()
-        descricao = input("Descrição: ").strip()
+        tipo = solicitar_texto("Tipo (FUNCIONARIO/GESTOR/RH_CLEVEL)").upper()
+        descricao = solicitar_texto("Descrição")
         run_execute(
             """
             INSERT INTO T_NRON_ACESSO (ID_ACESSO, TP_ACESSO, DS_ACESSO)
@@ -29,6 +37,8 @@ def cadastrar_acesso() -> None:
             {"id": id_acesso, "tipo": tipo, "descricao": descricao},
         )
         print("Tipo de acesso cadastrado com sucesso!")
+    except OperacaoCancelada:
+        print("Operação cancelada pelo usuário.")
     except Exception as exc:
         print(f"Erro ao cadastrar tipo de acesso: {exc}")
     finally:
@@ -62,13 +72,20 @@ def atualizar_acesso() -> None:
     try:
         limpar_tela()
         print("--- Atualizar Tipo de Acesso ---")
-        id_acesso = int(input("ID do acesso: ").strip())
+        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+        id_acesso = solicitar_inteiro("ID do acesso")
         acesso = buscar_por_id(TABELA, "ID_ACESSO", id_acesso)
         if not acesso:
             print("ID não encontrado.")
             return
-        novo_tipo = input(f"Tipo atual ({acesso['tp_acesso']}): ").strip() or acesso["tp_acesso"]
-        nova_desc = input(f"Descrição atual ({acesso['ds_acesso']}): ").strip() or acesso["ds_acesso"]
+        novo_tipo = solicitar_texto(
+            f"Tipo atual ({acesso['tp_acesso']}) [Enter para manter]", padrao=acesso["tp_acesso"], obrigatorio=False
+        ).upper()
+        nova_desc = solicitar_texto(
+            f"Descrição atual ({acesso['ds_acesso']}) [Enter para manter]",
+            padrao=acesso["ds_acesso"],
+            obrigatorio=False,
+        )
         run_execute(
             """
             UPDATE T_NRON_ACESSO
@@ -79,6 +96,8 @@ def atualizar_acesso() -> None:
             {"tipo": novo_tipo, "descricao": nova_desc, "id": id_acesso},
         )
         print("Registro atualizado.")
+    except OperacaoCancelada:
+        print("Operação cancelada pelo usuário.")
     except Exception as exc:
         print(f"Erro ao atualizar: {exc}")
     finally:
@@ -91,7 +110,8 @@ def excluir_acesso() -> None:
     try:
         limpar_tela()
         print("--- Excluir Tipo de Acesso ---")
-        id_acesso = int(input("ID do acesso: ").strip())
+        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+        id_acesso = solicitar_inteiro("ID do acesso")
         if not buscar_por_id(TABELA, "ID_ACESSO", id_acesso):
             print("ID não encontrado.")
             return
@@ -103,6 +123,8 @@ def excluir_acesso() -> None:
             print("Registro excluído.")
         else:
             print("Nenhum registro removido.")
+    except OperacaoCancelada:
+        print("Operação cancelada pelo usuário.")
     except Exception as exc:
         print(f"Erro ao excluir: {exc}")
     finally:

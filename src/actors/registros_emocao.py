@@ -7,14 +7,17 @@ from decimal import Decimal
 
 from connect.connect import run_execute, run_query
 from db_utils import buscar_por_id, registro_existe
-from utils import limpar_tela, pausar, solicitar_confirmacao
+from utils import (
+    OperacaoCancelada,
+    limpar_tela,
+    pausar,
+    solicitar_confirmacao,
+    solicitar_decimal,
+    solicitar_inteiro,
+    solicitar_texto,
+)
 
 TABELA = "T_NRON_REGIST_EMOCAO"
-
-
-def _parse_decimal(valor: str) -> Decimal:
-    # Converte valores informados na CLI (com vírgula/ponto) para Decimal.
-    return Decimal(valor.replace(",", "."))
 
 
 def cadastrar_registro_emocao() -> None:
@@ -22,15 +25,16 @@ def cadastrar_registro_emocao() -> None:
     try:
         limpar_tela()
         print("--- Cadastro de Registro de Emoção ---")
-        registro_id = int(input("ID do registro: ").strip())
+        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+        registro_id = solicitar_inteiro("ID do registro")
         if registro_existe(TABELA, "ID_REGIST_EMOCAO", registro_id):
             print("ID já cadastrado.")
             return
-        intensidade = _parse_decimal(input("Intensidade (0-10): ").strip())
-        descricao = input("Descrição: ").strip()
-        data_input = input("Data (YYYY-MM-DD): ").strip()
+        intensidade = solicitar_decimal("Intensidade (0-10)")
+        descricao = solicitar_texto("Descrição")
+        data_input = solicitar_texto("Data (YYYY-MM-DD)")
         data_registro = datetime.strptime(data_input, "%Y-%m-%d")
-        id_emocao = int(input("ID da emoção principal: ").strip())
+        id_emocao = solicitar_inteiro("ID da emoção principal")
         if not registro_existe("T_NRON_EMOCAO", "ID_EMOCAO", id_emocao):
             print("Emoção inexistente.")
             return
@@ -53,6 +57,8 @@ def cadastrar_registro_emocao() -> None:
             },
         )
         print("Registro de emoção cadastrado.")
+    except OperacaoCancelada:
+        print("Operação cancelada pelo usuário.")
     except Exception as exc:
         print(f"Erro ao cadastrar registro: {exc}")
     finally:
@@ -95,18 +101,30 @@ def atualizar_registro_emocao() -> None:
     try:
         limpar_tela()
         print("--- Atualizar Registro de Emoção ---")
-        registro_id = int(input("ID do registro: ").strip())
+        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+        registro_id = solicitar_inteiro("ID do registro")
         registro = buscar_por_id(TABELA, "ID_REGIST_EMOCAO", registro_id)
         if not registro:
             print("Registro não encontrado.")
             return
-        intensidade = input(f"Intensidade atual ({registro['int_regist_emocao']}): ").strip() or registro["int_regist_emocao"]
-        descricao = input(f"Descrição atual ({registro['ds_regist_emocao']}): ").strip() or registro["ds_regist_emocao"]
+        intensidade = solicitar_decimal(
+            f"Intensidade atual ({registro['int_regist_emocao']}) [Enter para manter]",
+            padrao=Decimal(str(registro["int_regist_emocao"])),
+        )
+        descricao = solicitar_texto(
+            f"Descrição atual ({registro['ds_regist_emocao']}) [Enter para manter]",
+            padrao=registro["ds_regist_emocao"],
+            obrigatorio=False,
+        )
         data_atual = registro["dt_regist_emocao"]
         if hasattr(data_atual, "strftime"):
             data_atual = data_atual.strftime("%Y-%m-%d")
-        data_input = input(f"Data atual ({data_atual}): ").strip() or data_atual
-        id_emocao = input(f"ID emoção atual ({registro['id_emocao']}): ").strip() or registro["id_emocao"]
+        data_input = solicitar_texto(
+            f"Data atual ({data_atual}) [Enter para manter]", padrao=str(data_atual), obrigatorio=False
+        )
+        id_emocao = solicitar_inteiro(
+            f"ID emoção atual ({registro['id_emocao']}) [Enter para manter]", padrao=int(registro["id_emocao"])
+        )
         run_execute(
             """
             UPDATE T_NRON_REGIST_EMOCAO
@@ -125,6 +143,8 @@ def atualizar_registro_emocao() -> None:
             },
         )
         print("Registro atualizado.")
+    except OperacaoCancelada:
+        print("Operação cancelada pelo usuário.")
     except Exception as exc:
         print(f"Erro ao atualizar registro: {exc}")
     finally:
@@ -136,7 +156,8 @@ def excluir_registro_emocao() -> None:
     try:
         limpar_tela()
         print("--- Excluir Registro de Emoção ---")
-        registro_id = int(input("ID do registro: ").strip())
+        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+        registro_id = solicitar_inteiro("ID do registro")
         if not buscar_por_id(TABELA, "ID_REGIST_EMOCAO", registro_id):
             print("Registro não encontrado.")
             return
@@ -148,6 +169,8 @@ def excluir_registro_emocao() -> None:
             print("Registro excluído.")
         else:
             print("Nenhuma linha afetada.")
+    except OperacaoCancelada:
+        print("Operação cancelada pelo usuário.")
     except Exception as exc:
         print(f"Erro ao excluir registro: {exc}")
     finally:

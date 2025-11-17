@@ -4,7 +4,14 @@ from __future__ import annotations
 
 from connect.connect import run_execute, run_query
 from db_utils import buscar_por_id, registro_existe
-from utils import limpar_tela, pausar, solicitar_confirmacao
+from utils import (
+    OperacaoCancelada,
+    limpar_tela,
+    pausar,
+    solicitar_confirmacao,
+    solicitar_inteiro,
+    solicitar_texto,
+)
 
 TABELA = "T_NRON_DEPARTAMENTO"
 
@@ -14,12 +21,13 @@ def cadastrar_departamento() -> None:
     try:
         limpar_tela()
         print("--- Cadastro de Departamento ---")
-        depto_id = int(input("ID do departamento: ").strip())
+        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+        depto_id = solicitar_inteiro("ID do departamento")
         if registro_existe(TABELA, "ID_DEPARTAMENTO", depto_id):
             print("Erro: ID já cadastrado.")
             return
-        nome = input("Nome: ").strip().title()
-        descricao = input("Descrição: ").strip()
+        nome = solicitar_texto("Nome").title()
+        descricao = solicitar_texto("Descrição")
         run_execute(
             """
             INSERT INTO T_NRON_DEPARTAMENTO (ID_DEPARTAMENTO, NOME_DEPARTAMENTO, DS_DEPARTAMENTO)
@@ -28,6 +36,8 @@ def cadastrar_departamento() -> None:
             {"id": depto_id, "nome": nome, "descricao": descricao},
         )
         print("Departamento cadastrado!")
+    except OperacaoCancelada:
+        print("Operação cancelada pelo usuário.")
     except Exception as exc:
         print(f"Erro ao cadastrar departamento: {exc}")
     finally:
@@ -60,13 +70,22 @@ def atualizar_departamento() -> None:
     try:
         limpar_tela()
         print("--- Atualizar Departamento ---")
-        depto_id = int(input("ID do departamento: ").strip())
+        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+        depto_id = solicitar_inteiro("ID do departamento")
         depto = buscar_por_id(TABELA, "ID_DEPARTAMENTO", depto_id)
         if not depto:
             print("Departamento não encontrado.")
             return
-        novo_nome = input(f"Nome atual ({depto['nome_departamento']}): ").strip() or depto["nome_departamento"]
-        nova_desc = input(f"Descrição atual ({depto['ds_departamento']}): ").strip() or depto["ds_departamento"]
+        novo_nome = solicitar_texto(
+            f"Nome atual ({depto['nome_departamento']}) [Enter para manter]",
+            padrao=depto["nome_departamento"],
+            obrigatorio=False,
+        ).title()
+        nova_desc = solicitar_texto(
+            f"Descrição atual ({depto['ds_departamento']}) [Enter para manter]",
+            padrao=depto["ds_departamento"],
+            obrigatorio=False,
+        )
         run_execute(
             """
             UPDATE T_NRON_DEPARTAMENTO
@@ -77,6 +96,8 @@ def atualizar_departamento() -> None:
             {"nome": novo_nome, "descricao": nova_desc, "id": depto_id},
         )
         print("Departamento atualizado.")
+    except OperacaoCancelada:
+        print("Operação cancelada pelo usuário.")
     except Exception as exc:
         print(f"Erro ao atualizar departamento: {exc}")
     finally:
@@ -88,7 +109,8 @@ def excluir_departamento() -> None:
     try:
         limpar_tela()
         print("--- Excluir Departamento ---")
-        depto_id = int(input("ID do departamento: ").strip())
+        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+        depto_id = solicitar_inteiro("ID do departamento")
         if not buscar_por_id(TABELA, "ID_DEPARTAMENTO", depto_id):
             print("Departamento não encontrado.")
             return
@@ -100,6 +122,8 @@ def excluir_departamento() -> None:
             print("Departamento excluído.")
         else:
             print("Nenhuma linha afetada.")
+    except OperacaoCancelada:
+        print("Operação cancelada pelo usuário.")
     except Exception as exc:
         print(f"Erro ao excluir departamento: {exc}")
     finally:

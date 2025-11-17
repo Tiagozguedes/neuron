@@ -14,7 +14,7 @@ from actors import (
     usuarios,
 )
 from actors.checkins import realizar_checkin_emocional
-from utils import limpar_tela, pausar
+from utils import deseja_voltar, limpar_tela, pausar
 
 MenuAction = Callable[[], None]
 
@@ -34,10 +34,11 @@ def main() -> None:
         print("8. Realizar check-in emocional")
         print("9. Consultas e relatórios (JSON)")
         print("0. Sair")
-        opcao = input("\nSelecione uma opção: ").strip()
-        if opcao == "0":
+        entrada = input("\nSelecione uma opção: ").strip()
+        if deseja_voltar(entrada):
             print("\nAté breve!")
             break
+        opcao = entrada
         if opcao == "1":
             _menu_crud(
                 "Usuários",
@@ -126,9 +127,10 @@ def _menu_crud(
         print("3. Atualizar")
         print("4. Excluir")
         print("0. Voltar")
-        opcao = input("\nEscolha: ").strip()
-        if opcao == "0":
+        entrada = input("\nEscolha: ").strip()
+        if deseja_voltar(entrada):
             break
+        opcao = entrada
         if opcao == "1":
             cadastrar()
         elif opcao == "2":

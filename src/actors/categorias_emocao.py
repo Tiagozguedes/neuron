@@ -4,7 +4,14 @@ from __future__ import annotations
 
 from connect.connect import run_execute, run_query
 from db_utils import buscar_por_id, registro_existe
-from utils import limpar_tela, pausar, solicitar_confirmacao
+from utils import (
+    OperacaoCancelada,
+    limpar_tela,
+    pausar,
+    solicitar_confirmacao,
+    solicitar_inteiro,
+    solicitar_texto,
+)
 
 TABELA = "T_NRON_CATG_EMOCAO"
 
@@ -14,11 +21,12 @@ def cadastrar_categoria() -> None:
     try:
         limpar_tela()
         print("--- Cadastro de Categoria de Emoção ---")
-        categoria_id = int(input("ID da categoria: ").strip())
+        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+        categoria_id = solicitar_inteiro("ID da categoria")
         if registro_existe(TABELA, "ID_CATG_EMOCAO", categoria_id):
             print("ID já cadastrado.")
             return
-        nome = input("Nome (POSITIVA/NEGATIVA/NEUTRA): ").strip().upper()
+        nome = solicitar_texto("Nome (POSITIVA/NEGATIVA/NEUTRA)").upper()
         run_execute(
             """
             INSERT INTO T_NRON_CATG_EMOCAO (ID_CATG_EMOCAO, NOME_CATG_EMOCAO)
@@ -27,6 +35,8 @@ def cadastrar_categoria() -> None:
             {"id": categoria_id, "nome": nome},
         )
         print("Categoria cadastrada.")
+    except OperacaoCancelada:
+        print("Operação cancelada pelo usuário.")
     except Exception as exc:
         print(f"Erro ao cadastrar categoria: {exc}")
     finally:
@@ -58,12 +68,17 @@ def atualizar_categoria() -> None:
     try:
         limpar_tela()
         print("--- Atualizar Categoria ---")
-        categoria_id = int(input("ID da categoria: ").strip())
+        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+        categoria_id = solicitar_inteiro("ID da categoria")
         categoria = buscar_por_id(TABELA, "ID_CATG_EMOCAO", categoria_id)
         if not categoria:
             print("Categoria não encontrada.")
             return
-        novo_nome = input(f"Nome atual ({categoria['nome_catg_emocao']}): ").strip() or categoria["nome_catg_emocao"]
+        novo_nome = solicitar_texto(
+            f"Nome atual ({categoria['nome_catg_emocao']}) [Enter para manter]",
+            padrao=categoria["nome_catg_emocao"],
+            obrigatorio=False,
+        ).upper()
         run_execute(
             """
             UPDATE T_NRON_CATG_EMOCAO
@@ -73,6 +88,8 @@ def atualizar_categoria() -> None:
             {"nome": novo_nome, "id": categoria_id},
         )
         print("Categoria atualizada.")
+    except OperacaoCancelada:
+        print("Operação cancelada pelo usuário.")
     except Exception as exc:
         print(f"Erro ao atualizar categoria: {exc}")
     finally:
@@ -84,7 +101,8 @@ def excluir_categoria() -> None:
     try:
         limpar_tela()
         print("--- Excluir Categoria ---")
-        categoria_id = int(input("ID da categoria: ").strip())
+        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+        categoria_id = solicitar_inteiro("ID da categoria")
         if not buscar_por_id(TABELA, "ID_CATG_EMOCAO", categoria_id):
             print("Categoria não encontrada.")
             return
@@ -96,6 +114,8 @@ def excluir_categoria() -> None:
             print("Categoria excluída.")
         else:
             print("Nenhuma linha afetada.")
+    except OperacaoCancelada:
+        print("Operação cancelada pelo usuário.")
     except Exception as exc:
         print(f"Erro ao excluir categoria: {exc}")
     finally:

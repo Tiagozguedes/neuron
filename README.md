@@ -19,7 +19,7 @@ Neuron nasceu da necessidade das empresas brasileiras de medir e cuidar da saúd
 - Menu único com CRUDs para usuários, departamentos, acessos, emoções, categorias, registros emocionais e respostas de formulário.
 - Fluxo de check-in emocional (opção 8) que coleta texto, consulta a IA e grava as métricas retornadas.
 - Módulo de consultas (opção 9) com exportação automática em `exports/<consulta>-<timestamp>.json`.
-- Integração com Oracle Database (persistência) e API pública da IA (`https://neuron-ai-v1yi.onrender.com/api/v1/analises-emocionais`).
+- Integração com Oracle Database (persistência) e API pública da IA (`POST /conversas/analisar`, compatível com `/api/v1/analises-emocionais`).
 
 ## Requisitos para rodar
 - Python 3.12+ e `pip`.
@@ -44,6 +44,7 @@ Neuron nasceu da necessidade das empresas brasileiras de medir e cuidar da saúd
    export ORACLE_PORT=1521
    export ORACLE_SERVICE=orcl
    export NEURON_API_BASE_URL=https://neuron-ai-v1yi.onrender.com
+   export NEURON_API_ANALISE_PATH=/conversas/analisar  # opcional
    export NEURON_API_KEY=<token_se_existir>
    ```
    > **Windows:** `setx NOME_VARIAVEL valor` grava permanentemente. Para sessões temporárias use `set NOME=valor` (CMD) ou `$env:NOME="valor"` (PowerShell).

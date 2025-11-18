@@ -8,6 +8,8 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Any, Mapping, Sequence
 
+from dotenv import load_dotenv
+
 try:
     import requests
 except ModuleNotFoundError:  # pragma: no cover
@@ -35,6 +37,15 @@ class EmotionReport:
     insights: tuple[str, ...]
 
 
+@dataclass(slots=True)
+class ApiConfig:
+    """Agrupa configurações da API carregadas via variáveis de ambiente."""
+
+    url: str
+    timeout: int
+    api_key: str | None
+
+
 def analisar_texto(texto: str, usuario_id: int | None = None) -> EmotionReport:
     """Envia o relato do colaborador para a API externa e devolve o relatório estruturado."""
     # Função principal consumida pelo CLI de check-in; encapsula validações e parsing do JSON.
@@ -42,13 +53,20 @@ def analisar_texto(texto: str, usuario_id: int | None = None) -> EmotionReport:
         raise ValueError("O texto para análise não pode estar vazio.")
     if requests is None:  # pragma: no cover
         raise RuntimeError("Dependência 'requests' ausente. Instale com 'pip install requests'.")
-    endpoint = _endpoint()
-    headers = _build_headers()
+    config = _api_config()
+    headers = _build_headers(config.api_key)
     payload = _build_payload(texto, usuario_id)
     try:
-        response = requests.post(endpoint, json=payload, headers=headers, timeout=_timeout())  # type: ignore[call-arg]
+        response = requests.post(  # type: ignore[call-arg]
+            config.url,
+            json=payload,
+            headers=headers,
+            timeout=config.timeout,
+        )
         response.raise_for_status()
     except Exception as exc:  # pragma: no cover - depende da rede
+        if requests is not None and isinstance(exc, requests.exceptions.HTTPError):  # type: ignore[attr-defined]
+            raise
         detalhe = ""
         resposta_http = getattr(exc, "response", None)
         if resposta_http is not None and hasattr(resposta_http, "status_code"):
@@ -64,36 +82,38 @@ def analisar_texto(texto: str, usuario_id: int | None = None) -> EmotionReport:
     return _parse_payload(data)
 
 
-def _build_headers() -> dict[str, str]:
+def _build_headers(api_key: str | None) -> dict[str, str]:
     # Monta cabeçalhos obrigatórios (JSON + Bearer token opcional).
     headers = {"Content-Type": "application/json"}
-    api_key = os.getenv("NEURON_API_KEY")
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
     return headers
 
 
-def _timeout() -> float:
-    # Permite ajustar o timeout via NEURON_API_TIMEOUT.
+def _api_config() -> ApiConfig:
+    # Lê variáveis via .env e devolve a URL final já concatenada.
+    load_dotenv()
+    base_url = (os.getenv("NEURON_API_BASE_URL") or DEFAULT_BASE_URL).strip()
+    if not base_url:
+        base_url = DEFAULT_BASE_URL
+    base_url = base_url.rstrip("/")
+
+    analise_path = (os.getenv("NEURON_API_ANALISE_PATH") or DEFAULT_ANALISE_PATH).strip() or DEFAULT_ANALISE_PATH
+    if not analise_path.startswith("/"):
+        analise_path = f"/{analise_path}"
+
+    timeout_raw = os.getenv("NEURON_API_TIMEOUT", "15")
     try:
-        return float(os.getenv("NEURON_API_TIMEOUT", "15"))
+        timeout = int(timeout_raw)
     except ValueError:
-        return 15.0
+        timeout = 15
 
-
-def _endpoint() -> str:
-    # Garante endpoint configurável usando apenas a base URL mais o path.
-    base_url = os.getenv("NEURON_API_BASE_URL")
-    legacy_endpoint = os.getenv("NEURON_API_ENDPOINT")
-    if base_url:
-        base = base_url.rstrip("/")
-        path = os.getenv("NEURON_API_ANALISE_PATH", DEFAULT_ANALISE_PATH)
-        if not path.startswith("/"):
-            path = f"/{path}"
-        return f"{base}{path}"
-    if legacy_endpoint:
-        return legacy_endpoint.rstrip("/")
-    return f"{DEFAULT_BASE_URL}{DEFAULT_ANALISE_PATH}"
+    api_key = (os.getenv("NEURON_API_KEY") or "").strip() or None
+    return ApiConfig(
+        url=f"{base_url}{analise_path}",
+        timeout=timeout,
+        api_key=api_key,
+    )
 
 
 def _build_payload(texto: str, usuario_id: int | None) -> dict[str, Any]:

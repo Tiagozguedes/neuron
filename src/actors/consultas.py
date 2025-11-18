@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from connect.connect import run_query
-from utils import deseja_voltar, input_opcao, limpar_tela, pausar, solicitar_confirmacao, titulo
+from utils import input_opcao, limpar_tela, pausar, solicitar_confirmacao, titulo
 
 EXPORT_DIR = Path("exports")
 

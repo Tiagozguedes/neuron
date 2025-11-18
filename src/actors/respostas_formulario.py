@@ -6,25 +6,14 @@ from decimal import Decimal
 
 from connect.connect import run_execute, run_query
 from db_utils import buscar_por_id, registro_existe
-from utils import (
-    OperacaoCancelada,
-    limpar_tela,
-    pausar,
-    solicitar_confirmacao,
-    solicitar_decimal,
-    solicitar_inteiro,
-    solicitar_texto,
-)
+from utils import fluxo_cli, solicitar_confirmacao, solicitar_decimal, solicitar_inteiro, solicitar_texto
 
 TABELA = "T_NRON_RESP_FORMULARIO"
 
 
 def cadastrar_resposta_formulario() -> None:
     # Coleta os indicadores retornados pela IA e grava em T_NRON_RESP_FORMULARIO.
-    try:
-        limpar_tela()
-        print("--- Cadastro de Resposta de Formulário ---")
-        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+    with fluxo_cli("--- Cadastro de Resposta de Formulário ---", "Erro ao cadastrar resposta"):
         resposta_id = solicitar_inteiro("ID da resposta")
         if registro_existe(TABELA, "ID_RESPOSTA", resposta_id):
             print("ID já cadastrado.")
@@ -76,19 +65,11 @@ def cadastrar_resposta_formulario() -> None:
             },
         )
         print("Resposta cadastrada.")
-    except OperacaoCancelada:
-        print("Operação cancelada pelo usuário.")
-    except Exception as exc:
-        print(f"Erro ao cadastrar resposta: {exc}")
-    finally:
-        pausar()
 
 
 def listar_respostas_formulario() -> None:
     # Consulta as respostas ordenadas pela data mais recente para auditoria.
-    try:
-        limpar_tela()
-        print("--- Respostas de Formulário ---")
+    with fluxo_cli("--- Respostas de Formulário ---", "Erro ao listar respostas", mostrar_instrucao=False):
         linhas = run_query(
             """
             SELECT ID_RESPOSTA,
@@ -115,18 +96,11 @@ def listar_respostas_formulario() -> None:
                 f"{linha['id_resposta']:>3} | Usuário: {linha['id_usuario']} | Data: {linha['dt_resposta']} | "
                 f"Motivação: {linha['mot_resposta']} | Estresse: {linha['est_resposta']} | Modelo: {linha['mod_ver_resposta']}"
             )
-    except Exception as exc:
-        print(f"Erro ao listar respostas: {exc}")
-    finally:
-        pausar()
 
 
 def atualizar_resposta_formulario() -> None:
     # Possibilita ajustar notas/observações e metadados da análise.
-    try:
-        limpar_tela()
-        print("--- Atualizar Resposta de Formulário ---")
-        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+    with fluxo_cli("--- Atualizar Resposta de Formulário ---", "Erro ao atualizar resposta"):
         resposta_id = solicitar_inteiro("ID da resposta")
         resposta = buscar_por_id(TABELA, "ID_RESPOSTA", resposta_id)
         if not resposta:
@@ -196,20 +170,11 @@ def atualizar_resposta_formulario() -> None:
             },
         )
         print("Resposta atualizada.")
-    except OperacaoCancelada:
-        print("Operação cancelada pelo usuário.")
-    except Exception as exc:
-        print(f"Erro ao atualizar resposta: {exc}")
-    finally:
-        pausar()
 
 
 def excluir_resposta_formulario() -> None:
     # Remove uma resposta específica mediante confirmação.
-    try:
-        limpar_tela()
-        print("--- Excluir Resposta de Formulário ---")
-        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+    with fluxo_cli("--- Excluir Resposta de Formulário ---", "Erro ao excluir resposta"):
         resposta_id = solicitar_inteiro("ID da resposta")
         if not buscar_por_id(TABELA, "ID_RESPOSTA", resposta_id):
             print("Resposta não encontrada.")
@@ -222,9 +187,3 @@ def excluir_resposta_formulario() -> None:
             print("Resposta excluída.")
         else:
             print("Nenhuma linha afetada.")
-    except OperacaoCancelada:
-        print("Operação cancelada pelo usuário.")
-    except Exception as exc:
-        print(f"Erro ao excluir resposta: {exc}")
-    finally:
-        pausar()

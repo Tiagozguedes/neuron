@@ -4,24 +4,14 @@ from __future__ import annotations
 
 from connect.connect import run_execute, run_query
 from db_utils import buscar_por_id, registro_existe
-from utils import (
-    OperacaoCancelada,
-    limpar_tela,
-    pausar,
-    solicitar_confirmacao,
-    solicitar_inteiro,
-    solicitar_texto,
-)
+from utils import fluxo_cli, solicitar_confirmacao, solicitar_inteiro, solicitar_texto
 
 TABELA = "T_NRON_DEPARTAMENTO"
 
 
 def cadastrar_departamento() -> None:
     # Recolhe nome/descrição e realiza INSERT na tabela de departamentos.
-    try:
-        limpar_tela()
-        print("--- Cadastro de Departamento ---")
-        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+    with fluxo_cli("--- Cadastro de Departamento ---", "Erro ao cadastrar departamento"):
         depto_id = solicitar_inteiro("ID do departamento")
         if registro_existe(TABELA, "ID_DEPARTAMENTO", depto_id):
             print("Erro: ID já cadastrado.")
@@ -36,19 +26,11 @@ def cadastrar_departamento() -> None:
             {"id": depto_id, "nome": nome, "descricao": descricao},
         )
         print("Departamento cadastrado!")
-    except OperacaoCancelada:
-        print("Operação cancelada pelo usuário.")
-    except Exception as exc:
-        print(f"Erro ao cadastrar departamento: {exc}")
-    finally:
-        pausar()
 
 
 def listar_departamentos() -> None:
     # Exibe a tabela ordenada por nome para facilitar consulta.
-    try:
-        limpar_tela()
-        print("--- Departamentos ---")
+    with fluxo_cli("--- Departamentos ---", "Erro ao listar departamentos", mostrar_instrucao=False):
         linhas = run_query(
             "SELECT ID_DEPARTAMENTO, NOME_DEPARTAMENTO, DS_DEPARTAMENTO "
             "FROM T_NRON_DEPARTAMENTO ORDER BY NOME_DEPARTAMENTO",
@@ -59,18 +41,11 @@ def listar_departamentos() -> None:
             return
         for linha in linhas:
             print(f"{linha['id_departamento']:>3} | {linha['nome_departamento']:<25} | {linha['ds_departamento']}")
-    except Exception as exc:
-        print(f"Erro ao listar departamentos: {exc}")
-    finally:
-        pausar()
 
 
 def atualizar_departamento() -> None:
     # Permite editar nome/descrição mantendo o restante do registro.
-    try:
-        limpar_tela()
-        print("--- Atualizar Departamento ---")
-        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+    with fluxo_cli("--- Atualizar Departamento ---", "Erro ao atualizar departamento"):
         depto_id = solicitar_inteiro("ID do departamento")
         depto = buscar_por_id(TABELA, "ID_DEPARTAMENTO", depto_id)
         if not depto:
@@ -96,20 +71,11 @@ def atualizar_departamento() -> None:
             {"nome": novo_nome, "descricao": nova_desc, "id": depto_id},
         )
         print("Departamento atualizado.")
-    except OperacaoCancelada:
-        print("Operação cancelada pelo usuário.")
-    except Exception as exc:
-        print(f"Erro ao atualizar departamento: {exc}")
-    finally:
-        pausar()
 
 
 def excluir_departamento() -> None:
     # Remove departamento após checar existência e confirmar operação.
-    try:
-        limpar_tela()
-        print("--- Excluir Departamento ---")
-        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+    with fluxo_cli("--- Excluir Departamento ---", "Erro ao excluir departamento"):
         depto_id = solicitar_inteiro("ID do departamento")
         if not buscar_por_id(TABELA, "ID_DEPARTAMENTO", depto_id):
             print("Departamento não encontrado.")
@@ -122,9 +88,3 @@ def excluir_departamento() -> None:
             print("Departamento excluído.")
         else:
             print("Nenhuma linha afetada.")
-    except OperacaoCancelada:
-        print("Operação cancelada pelo usuário.")
-    except Exception as exc:
-        print(f"Erro ao excluir departamento: {exc}")
-    finally:
-        pausar()

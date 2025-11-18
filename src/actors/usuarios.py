@@ -6,14 +6,7 @@ from datetime import date, datetime
 
 from connect.connect import run_execute, run_query
 from db_utils import buscar_por_id, registro_existe
-from utils import (
-    OperacaoCancelada,
-    limpar_tela,
-    pausar,
-    solicitar_confirmacao,
-    solicitar_inteiro,
-    solicitar_texto,
-)
+from utils import fluxo_cli, solicitar_confirmacao, solicitar_inteiro, solicitar_texto
 
 TABELA = "T_NRON_USUARIO"
 STATUS_LABELS = {"A": "Ativo", "I": "Inativo"}
@@ -67,10 +60,7 @@ def _solicitar_status(mensagem: str, padrao: str = "A") -> str:
 
 def cadastrar_usuario() -> None:
     # Responsável por cadastrar um colaborador/gestor informando acessos e departamento.
-    try:
-        limpar_tela()
-        print("--- Cadastro de Usuário ---")
-        print("Digite 'voltar' a qualquer momento para cancelar e retornar ao menu.\n")
+    with fluxo_cli("--- Cadastro de Usuário ---", "Erro ao cadastrar usuário"):
         usuario_id = solicitar_inteiro("ID do usuário")
         if registro_existe(TABELA, "ID_USUARIO", usuario_id):
             print("ID já cadastrado.")
@@ -113,19 +103,11 @@ def cadastrar_usuario() -> None:
             },
         )
         print("Usuário cadastrado!")
-    except OperacaoCancelada:
-        print("Operação cancelada pelo usuário.")
-    except Exception as exc:
-        print(f"Erro ao cadastrar usuário: {exc}")
-    finally:
-        pausar()
 
 
 def listar_usuarios() -> None:
     # Lista todos os usuários ordenados por nome para consulta rápida.
-    try:
-        limpar_tela()
-        print("--- Usuários ---")
+    with fluxo_cli("--- Usuários ---", "Erro ao listar usuários", mostrar_instrucao=False):
         linhas = run_query(
             """
             SELECT u.ID_USUARIO,
@@ -149,18 +131,11 @@ def listar_usuarios() -> None:
                 f"{linha['id_usuario']:>3} | {linha['nome']:<25} | {linha['em_usuario']:<25} | "
                 f"Status: {status_legivel} | Cadastro: {linha['dt_cadastro']}"
             )
-    except Exception as exc:
-        print(f"Erro ao listar usuários: {exc}")
-    finally:
-        pausar()
 
 
 def atualizar_usuario() -> None:
     # Permite alterar status, perfis e senha de um usuário existente.
-    try:
-        limpar_tela()
-        print("--- Atualizar Usuário ---")
-        print("Digite 'voltar' a qualquer momento para cancelar e retornar ao menu.\n")
+    with fluxo_cli("--- Atualizar Usuário ---", "Erro ao atualizar usuário"):
         usuario_id = solicitar_inteiro("ID do usuário")
         usuario = buscar_por_id(TABELA, "ID_USUARIO", usuario_id)
         if not usuario:
@@ -208,20 +183,11 @@ def atualizar_usuario() -> None:
             },
         )
         print("Usuário atualizado.")
-    except OperacaoCancelada:
-        print("Operação cancelada pelo usuário.")
-    except Exception as exc:
-        print(f"Erro ao atualizar usuário: {exc}")
-    finally:
-        pausar()
 
 
 def excluir_usuario() -> None:
     # Remove usuário específico após a confirmação de exclusão.
-    try:
-        limpar_tela()
-        print("--- Excluir Usuário ---")
-        print("Digite 'voltar' a qualquer momento para cancelar e retornar ao menu.\n")
+    with fluxo_cli("--- Excluir Usuário ---", "Erro ao excluir usuário"):
         usuario_id = solicitar_inteiro("ID do usuário")
         if not buscar_por_id(TABELA, "ID_USUARIO", usuario_id):
             print("Usuário não encontrado.")
@@ -234,9 +200,3 @@ def excluir_usuario() -> None:
             print("Usuário excluído.")
         else:
             print("Nenhum registro removido.")
-    except OperacaoCancelada:
-        print("Operação cancelada pelo usuário.")
-    except Exception as exc:
-        print(f"Erro ao excluir usuário: {exc}")
-    finally:
-        pausar()

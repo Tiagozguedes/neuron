@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import os
 import platform
+from contextlib import contextmanager
 from decimal import Decimal
-from typing import Sequence
+from typing import Iterator, Sequence
 
 _VOLTAR_KEYWORDS = {"0", "voltar", "sair", "exit", "quit", "retornar", "cancelar", "back"}
 
@@ -119,3 +120,21 @@ def solicitar_decimal(mensagem: str, padrao: Decimal | None = None) -> Decimal:
             return Decimal(normalizado)
         except Exception:
             print("Não foi possível interpretar o número informado. Tente novamente ou digite 'voltar'.")
+
+
+@contextmanager
+def fluxo_cli(titulo: str, erro_padrao: str, *, mostrar_instrucao: bool = True) -> Iterator[None]:
+    """Padroniza cabeçalho, captura de exceções e pausa final em cada fluxo."""
+    limpar_tela()
+    if titulo:
+        print(titulo)
+    if mostrar_instrucao:
+        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+    try:
+        yield
+    except OperacaoCancelada:
+        print("Operação cancelada pelo usuário.")
+    except Exception as exc:
+        print(f"{erro_padrao}: {exc}")
+    finally:
+        pausar()

@@ -4,25 +4,15 @@ from __future__ import annotations
 
 from connect.connect import run_execute, run_query
 from db_utils import buscar_por_id, registro_existe
-from utils import (
-    OperacaoCancelada,
-    limpar_tela,
-    pausar,
-    solicitar_confirmacao,
-    solicitar_inteiro,
-    solicitar_texto,
-)
+from utils import fluxo_cli, solicitar_confirmacao, solicitar_inteiro, solicitar_texto
 
 TABELA = "T_NRON_ACESSO"
 
 
 def cadastrar_acesso() -> None:
-    # Solicita dados no terminal e insere um novo tipo de acesso.
     """Cria um novo tipo de acesso."""
-    try:
-        limpar_tela()
-        print("--- Cadastro de Tipo de Acesso ---")
-        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+    # Solicita dados no terminal e insere um novo tipo de acesso.
+    with fluxo_cli("--- Cadastro de Tipo de Acesso ---", "Erro ao cadastrar tipo de acesso"):
         id_acesso = solicitar_inteiro("ID do acesso")
         if registro_existe(TABELA, "ID_ACESSO", id_acesso):
             print("Erro: ID já cadastrado.")
@@ -37,20 +27,12 @@ def cadastrar_acesso() -> None:
             {"id": id_acesso, "tipo": tipo, "descricao": descricao},
         )
         print("Tipo de acesso cadastrado com sucesso!")
-    except OperacaoCancelada:
-        print("Operação cancelada pelo usuário.")
-    except Exception as exc:
-        print(f"Erro ao cadastrar tipo de acesso: {exc}")
-    finally:
-        pausar()
 
 
 def listar_acessos() -> None:
-    # Executa SELECT simples e imprime tabela formatada.
     """Lista todos os tipos de acesso."""
-    try:
-        limpar_tela()
-        print("--- Tipos de Acesso ---")
+    # Executa SELECT simples e imprime tabela formatada.
+    with fluxo_cli("--- Tipos de Acesso ---", "Erro ao listar acessos", mostrar_instrucao=False):
         linhas = run_query(
             "SELECT ID_ACESSO, TP_ACESSO, DS_ACESSO FROM T_NRON_ACESSO ORDER BY ID_ACESSO",
             {},
@@ -60,19 +42,12 @@ def listar_acessos() -> None:
             return
         for linha in linhas:
             print(f"{linha['id_acesso']:>3} | {linha['tp_acesso']:<15} | {linha['ds_acesso']}")
-    except Exception as exc:
-        print(f"Erro ao listar acessos: {exc}")
-    finally:
-        pausar()
 
 
 def atualizar_acesso() -> None:
-    # Recupera registro existente e permite alterar tipo/descrição.
     """Atualiza descrição e tipo."""
-    try:
-        limpar_tela()
-        print("--- Atualizar Tipo de Acesso ---")
-        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+    # Recupera registro existente e permite alterar tipo/descrição.
+    with fluxo_cli("--- Atualizar Tipo de Acesso ---", "Erro ao atualizar"):
         id_acesso = solicitar_inteiro("ID do acesso")
         acesso = buscar_por_id(TABELA, "ID_ACESSO", id_acesso)
         if not acesso:
@@ -96,21 +71,12 @@ def atualizar_acesso() -> None:
             {"tipo": novo_tipo, "descricao": nova_desc, "id": id_acesso},
         )
         print("Registro atualizado.")
-    except OperacaoCancelada:
-        print("Operação cancelada pelo usuário.")
-    except Exception as exc:
-        print(f"Erro ao atualizar: {exc}")
-    finally:
-        pausar()
 
 
 def excluir_acesso() -> None:
-    # Pergunta o ID e remove o registro após confirmação do usuário.
     """Remove um tipo de acesso."""
-    try:
-        limpar_tela()
-        print("--- Excluir Tipo de Acesso ---")
-        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+    # Pergunta o ID e remove o registro após confirmação do usuário.
+    with fluxo_cli("--- Excluir Tipo de Acesso ---", "Erro ao excluir tipo de acesso"):
         id_acesso = solicitar_inteiro("ID do acesso")
         if not buscar_por_id(TABELA, "ID_ACESSO", id_acesso):
             print("ID não encontrado.")
@@ -123,9 +89,3 @@ def excluir_acesso() -> None:
             print("Registro excluído.")
         else:
             print("Nenhum registro removido.")
-    except OperacaoCancelada:
-        print("Operação cancelada pelo usuário.")
-    except Exception as exc:
-        print(f"Erro ao excluir: {exc}")
-    finally:
-        pausar()

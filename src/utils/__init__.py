@@ -4,6 +4,7 @@ from .helpers import (
     OperacaoCancelada,
     confirmar_acao,
     deseja_voltar,
+    fluxo_cli,
     input_opcao,
     limpar_tela,
     pausar,
@@ -26,4 +27,5 @@ __all__ = [
     "solicitar_texto",
     "solicitar_inteiro",
     "solicitar_decimal",
+    "fluxo_cli",
 ]

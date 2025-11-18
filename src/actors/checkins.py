@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import os
 from datetime import datetime, timezone
 
 from connect.connect import run_execute, run_query
 from db_utils import proximo_id, registro_existe
-from services.analise_emocional import EmotionReport, analisar_conversa
+from services.analise_emocional import DEFAULT_BASE_URL, AnaliseIAError, EmotionReport, analisar_conversa
 from utils import (
     OperacaoCancelada,
     deseja_voltar,
@@ -40,7 +41,11 @@ def realizar_checkin_emocional() -> None:
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }
         ]
-        relatorio = analisar_conversa(mensagens)
+        try:
+            relatorio = analisar_conversa(mensagens)
+        except AnaliseIAError as exc:
+            _orientar_falha_api(exc)
+            return
         _mostrar_relatorio(relatorio)
         if not solicitar_confirmacao("\nDeseja salvar este check-in no banco de dados?"):
             print("Check-in descartado pelo usuário.")
@@ -75,6 +80,18 @@ def _coletar_relato() -> str:
             break
         linhas.append(linha.strip())
     return "\n".join(linhas).strip()
+
+
+def _orientar_falha_api(erro: AnaliseIAError) -> None:
+    # Fornece direcionamento claro quando o endpoint da IA estiver indisponível.
+    base_configurada = os.getenv("NEURON_API_BASE_URL") or DEFAULT_BASE_URL
+    print("\nNão foi possível obter a análise da IA.")
+    print(f"Endpoint configurado: {base_configurada}")
+    print(
+        "Verifique se esse domínio está ativo no Render ou execute a API local descrita no README. "
+        "Atualize as variáveis NEURON_API_BASE_URL/NEURON_API_ANALISE_PATH se o endereço tiver mudado."
+    )
+    print(f"Detalhes técnicos: {erro}")
 
 
 def _mostrar_relatorio(relatorio: EmotionReport) -> None:

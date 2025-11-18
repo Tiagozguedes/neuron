@@ -4,24 +4,14 @@ from __future__ import annotations
 
 from connect.connect import run_execute, run_query
 from db_utils import buscar_por_id, registro_existe
-from utils import (
-    OperacaoCancelada,
-    limpar_tela,
-    pausar,
-    solicitar_confirmacao,
-    solicitar_inteiro,
-    solicitar_texto,
-)
+from utils import fluxo_cli, solicitar_confirmacao, solicitar_inteiro, solicitar_texto
 
 TABELA = "T_NRON_EMOCAO"
 
 
 def cadastrar_emocao() -> None:
     # Coleta dados da emoção (nome/cor/categoria) e insere no Oracle.
-    try:
-        limpar_tela()
-        print("--- Cadastro de Emoção ---")
-        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+    with fluxo_cli("--- Cadastro de Emoção ---", "Erro ao cadastrar emoção"):
         emocao_id = solicitar_inteiro("ID da emoção")
         if registro_existe(TABELA, "ID_EMOCAO", emocao_id):
             print("ID já cadastrado.")
@@ -37,19 +27,11 @@ def cadastrar_emocao() -> None:
             {"id": emocao_id, "nome": nome, "cor": cor, "categoria": categoria_id},
         )
         print("Emoção cadastrada.")
-    except OperacaoCancelada:
-        print("Operação cancelada pelo usuário.")
-    except Exception as exc:
-        print(f"Erro ao cadastrar emoção: {exc}")
-    finally:
-        pausar()
 
 
 def listar_emocoes() -> None:
     # Lista todas as emoções cadastradas com ordenação alfabética.
-    try:
-        limpar_tela()
-        print("--- Emoções ---")
+    with fluxo_cli("--- Emoções ---", "Erro ao listar emoções", mostrar_instrucao=False):
         linhas = run_query(
             "SELECT ID_EMOCAO, NM_EMOCAO, COR_EMOCAO, ID_CATG_EMOCAO FROM T_NRON_EMOCAO ORDER BY NM_EMOCAO",
             {},
@@ -62,18 +44,11 @@ def listar_emocoes() -> None:
                 f"{linha['id_emocao']:>3} | {linha['nm_emocao']:<15} | Cor: {linha['cor_emocao']:<8} | "
                 f"Categoria: {linha['id_catg_emocao']}"
             )
-    except Exception as exc:
-        print(f"Erro ao listar emoções: {exc}")
-    finally:
-        pausar()
 
 
 def atualizar_emocao() -> None:
     # Permite editar atributos da emoção individualmente.
-    try:
-        limpar_tela()
-        print("--- Atualizar Emoção ---")
-        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+    with fluxo_cli("--- Atualizar Emoção ---", "Erro ao atualizar emoção"):
         emocao_id = solicitar_inteiro("ID da emoção")
         emocao = buscar_por_id(TABELA, "ID_EMOCAO", emocao_id)
         if not emocao:
@@ -100,20 +75,11 @@ def atualizar_emocao() -> None:
             {"nome": novo_nome, "cor": nova_cor, "categoria": int(nova_cat), "id": emocao_id},
         )
         print("Emoção atualizada.")
-    except OperacaoCancelada:
-        print("Operação cancelada pelo usuário.")
-    except Exception as exc:
-        print(f"Erro ao atualizar emoção: {exc}")
-    finally:
-        pausar()
 
 
 def excluir_emocao() -> None:
     # Remove uma emoção já existente após confirmação do usuário.
-    try:
-        limpar_tela()
-        print("--- Excluir Emoção ---")
-        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+    with fluxo_cli("--- Excluir Emoção ---", "Erro ao excluir emoção"):
         emocao_id = solicitar_inteiro("ID da emoção")
         if not buscar_por_id(TABELA, "ID_EMOCAO", emocao_id):
             print("Emoção não encontrada.")
@@ -126,9 +92,3 @@ def excluir_emocao() -> None:
             print("Emoção excluída.")
         else:
             print("Nenhuma linha afetada.")
-    except OperacaoCancelada:
-        print("Operação cancelada pelo usuário.")
-    except Exception as exc:
-        print(f"Erro ao excluir emoção: {exc}")
-    finally:
-        pausar()

@@ -7,25 +7,14 @@ from decimal import Decimal
 
 from connect.connect import run_execute, run_query
 from db_utils import buscar_por_id, registro_existe
-from utils import (
-    OperacaoCancelada,
-    limpar_tela,
-    pausar,
-    solicitar_confirmacao,
-    solicitar_decimal,
-    solicitar_inteiro,
-    solicitar_texto,
-)
+from utils import fluxo_cli, solicitar_confirmacao, solicitar_decimal, solicitar_inteiro, solicitar_texto
 
 TABELA = "T_NRON_REGIST_EMOCAO"
 
 
 def cadastrar_registro_emocao() -> None:
     # Fluxo de inserção manual de registros (usado por administradores).
-    try:
-        limpar_tela()
-        print("--- Cadastro de Registro de Emoção ---")
-        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+    with fluxo_cli("--- Cadastro de Registro de Emoção ---", "Erro ao cadastrar registro"):
         registro_id = solicitar_inteiro("ID do registro")
         if registro_existe(TABELA, "ID_REGIST_EMOCAO", registro_id):
             print("ID já cadastrado.")
@@ -57,19 +46,11 @@ def cadastrar_registro_emocao() -> None:
             },
         )
         print("Registro de emoção cadastrado.")
-    except OperacaoCancelada:
-        print("Operação cancelada pelo usuário.")
-    except Exception as exc:
-        print(f"Erro ao cadastrar registro: {exc}")
-    finally:
-        pausar()
 
 
 def listar_registros_emocao() -> None:
     # Mostra o histórico em ordem cronológica inversa.
-    try:
-        limpar_tela()
-        print("--- Registros de Emoção ---")
+    with fluxo_cli("--- Registros de Emoção ---", "Erro ao listar registros", mostrar_instrucao=False):
         linhas = run_query(
             """
             SELECT ID_REGIST_EMOCAO,
@@ -90,18 +71,11 @@ def listar_registros_emocao() -> None:
                 f"{linha['id_regist_emocao']:>3} | Intensidade: {linha['int_regist_emocao']} | "
                 f"Data: {linha['dt_regist_emocao']} | Emoção: {linha['id_emocao']}"
             )
-    except Exception as exc:
-        print(f"Erro ao listar registros: {exc}")
-    finally:
-        pausar()
 
 
 def atualizar_registro_emocao() -> None:
     # Permite ajustar detalhes (intensidade, descrição, data, emoção).
-    try:
-        limpar_tela()
-        print("--- Atualizar Registro de Emoção ---")
-        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+    with fluxo_cli("--- Atualizar Registro de Emoção ---", "Erro ao atualizar registro"):
         registro_id = solicitar_inteiro("ID do registro")
         registro = buscar_por_id(TABELA, "ID_REGIST_EMOCAO", registro_id)
         if not registro:
@@ -143,20 +117,11 @@ def atualizar_registro_emocao() -> None:
             },
         )
         print("Registro atualizado.")
-    except OperacaoCancelada:
-        print("Operação cancelada pelo usuário.")
-    except Exception as exc:
-        print(f"Erro ao atualizar registro: {exc}")
-    finally:
-        pausar()
 
 
 def excluir_registro_emocao() -> None:
     # Exclui o registro solicitado após confirmação (limpeza de dados).
-    try:
-        limpar_tela()
-        print("--- Excluir Registro de Emoção ---")
-        print("Digite 'voltar' a qualquer momento para cancelar.\n")
+    with fluxo_cli("--- Excluir Registro de Emoção ---", "Erro ao excluir registro"):
         registro_id = solicitar_inteiro("ID do registro")
         if not buscar_por_id(TABELA, "ID_REGIST_EMOCAO", registro_id):
             print("Registro não encontrado.")
@@ -169,9 +134,3 @@ def excluir_registro_emocao() -> None:
             print("Registro excluído.")
         else:
             print("Nenhuma linha afetada.")
-    except OperacaoCancelada:
-        print("Operação cancelada pelo usuário.")
-    except Exception as exc:
-        print(f"Erro ao excluir registro: {exc}")
-    finally:
-        pausar()

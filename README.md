@@ -48,7 +48,24 @@ Neuron nasceu da necessidade das empresas brasileiras de medir e cuidar da saúd
    export NEURON_API_KEY=<token_se_existir>
    ```
    > **Windows:** `setx NOME_VARIAVEL valor` grava permanentemente. Para sessões temporárias use `set NOME=valor` (CMD) ou `$env:NOME="valor"` (PowerShell).
-   > `NEURON_API_KEY` é opcional e só precisa ser definido se o endpoint exigir autenticação Bearer. O caminho usado pelo cliente (por padrão `/conversas/analisar`) já é configurado dentro do código, mas pode ser sobrescrito via `NEURON_API_ANALISE_PATH` se necessário.
+   > `NEURON_API_KEY` é opcional e só precisa ser definido se o endpoint exigir autenticação Bearer. Sempre aponte `NEURON_API_BASE_URL` para o domínio ativo do Render (ex.: `https://meu-neuron.onrender.com`). Se o serviço migrar de domínio ou for recriado, basta atualizar essa variável no `.env` para que a CLI volte a funcionar. Para testes locais com a API Flask, você pode definir `NEURON_API_BASE_URL=http://localhost:5000` e manter o caminho padrão `/conversas/analisar`.
+
+## API da IA (diagnóstico e manutenção)
+- Sempre sincronize `NEURON_API_BASE_URL` com o domínio divulgado pelo Render. Se a instância antiga cair ou for substituída, basta editar o `.env` e reiniciar a CLI para apontar para o novo endereço.
+- O serviço exposto no Render está no repositório `../AI Neuron` e o arquivo `api_flask.py` publica `GET /health`, `POST /classificar`, `POST /conversas/analisar` e o alias `POST /api/v1/analises-emocionais`. As variáveis usadas no deploy estão descritas em `../AI Neuron/render.yaml` (principalmente `NEURON_MODEL_PATH` e `PYTHON_VERSION`).
+- O domínio antigo (`https://neuron-ai-v1yi.onrender.com`) não tem instância ativa no momento – `curl -i https://neuron-ai-v1yi.onrender.com/health` retorna `404 Not Found` com o cabeçalho `x-render-routing: no-server`. Até religar o serviço, a CLI sempre receberá erro ao tentar analisar sentimentos.
+- Para religar no Render, faça deploy do repositório `AI Neuron` via **Blueprint** usando o `render.yaml`, aguarde o status *Live* e valide com `curl -i https://<novo-dominio>/health`. Em seguida, atualize `NEURON_API_BASE_URL` (no `.env` ou variável de ambiente) para o domínio divulgado pelo Render.
+- Para testar localmente (ou usar temporariamente enquanto o Render não volta), suba a API com `python api_flask.py` dentro do repositório `AI Neuron` e defina `NEURON_API_BASE_URL=http://localhost:5000`. Valide com `curl -i http://localhost:5000/health` e execute uma análise manual usando:
+  ```bash
+  NEURON_API_BASE_URL=http://localhost:5000
+  NEURON_API_ANALISE_PATH=/conversas/analisar
+  ```
+  ```bash
+  curl -X POST http://localhost:5000/conversas/analisar \
+    -H "Content-Type: application/json" \
+    -d '{"mensagens": [{"texto": "Hoje estou feliz e motivado."}]}'
+  ```
+  O CLI usa exatamente esse contrato (`mensagens` com `texto`/`timestamp`) e interpreta o JSON retornado em `src/services/analise_emocional.py`.
 
 ## Executando
 ### 1. Menu administrativo (CRUD + relatórios)

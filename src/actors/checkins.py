@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 from connect.connect import run_execute, run_query
 from db_utils import proximo_id, registro_existe
-from services.analise_emocional import EmotionReport, analisar_texto
+from services.analise_emocional import EmotionReport, analisar_conversa
 from utils import (
     OperacaoCancelada,
     deseja_voltar,
@@ -34,7 +34,13 @@ def realizar_checkin_emocional() -> None:
             print("Nenhum relato informado, operação cancelada.")
             return
         print("\nEnviando relato para a API Neuron...")
-        relatorio = analisar_texto(texto, usuario_id)
+        mensagens = [
+            {
+                "texto": texto,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+        ]
+        relatorio = analisar_conversa(mensagens)
         _mostrar_relatorio(relatorio)
         if not solicitar_confirmacao("\nDeseja salvar este check-in no banco de dados?"):
             print("Check-in descartado pelo usuário.")
@@ -74,7 +80,12 @@ def _coletar_relato() -> str:
 def _mostrar_relatorio(relatorio: EmotionReport) -> None:
     # Exibe métricas retornadas pela IA para que o colaborador aprove ou não o salvamento.
     print("\n--- Relatório da IA ---")
-    print(f"Emoção predominante: {relatorio.emocao_nome or 'indefinida'}")
+    mensagem_principal = relatorio.mensagens[0] if relatorio.mensagens else None
+    emocao = mensagem_principal.emocao if mensagem_principal else relatorio.emocao_nome
+    sentimento = mensagem_principal.sentimento if mensagem_principal else None
+    print(f"Emoção predominante: {emocao or 'indefinida'}")
+    if sentimento:
+        print(f"Sentimento predominante: {sentimento}")
     print(f"Intensidade: {relatorio.intensidade}")
     print(f"Motivação: {relatorio.motivacao}")
     print(f"Felicidade: {relatorio.felicidade}")
@@ -84,6 +95,15 @@ def _mostrar_relatorio(relatorio: EmotionReport) -> None:
     print(f"Modelo: {relatorio.modelo_versao} | Análise: {relatorio.data_analise.isoformat()}")
     if relatorio.resumo:
         print(f"\nResumo da IA:\n{relatorio.resumo}")
+    if relatorio.mensagens:
+        print("\nDetalhamento por mensagem:")
+        for idx, mensagem in enumerate(relatorio.mensagens, start=1):
+            referencia = mensagem.timestamp or mensagem.data
+            referencia_txt = referencia.isoformat() if referencia else "Data não informada"
+            print(
+                f"  {idx}. {referencia_txt} | Emoção: {mensagem.emocao or 'n/d'} "
+                f"| Sentimento: {mensagem.sentimento or 'n/d'}"
+            )
     if relatorio.insights:
         print("\nRecomendações personalizadas:")
         for idx, insight in enumerate(relatorio.insights, 1):

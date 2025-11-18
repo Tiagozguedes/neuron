@@ -19,8 +19,8 @@ def main() -> None:
         print("        SISTEMA NEURON — MENU PRINCIPAL    ")
         print("===========================================\n")
         print("1. Cadastros básicos")
-        print("2. Check-in emocional (IA)")
-        print("3. Consultas e relatórios")
+        print("2. Realizar check-in emocional (envia seu relato para a IA)")
+        print("3. Consultas e relatórios agregados de emoções")
         print("0. Sair")
         opcao = input_opcao("\nEscolha uma opção: ", ("1", "2", "3", "0"))
         if opcao == "0":

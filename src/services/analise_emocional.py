@@ -13,7 +13,8 @@ try:
 except ModuleNotFoundError:  # pragma: no cover
     requests = None  # type: ignore[assignment]
 
-DEFAULT_ENDPOINT = "https://neuron-ai-v1yi.onrender.com/api/v1/analises-emocionais"
+DEFAULT_BASE_URL = "https://neuron-ai-v1yi.onrender.com"
+DEFAULT_ANALISE_PATH = "/conversas/analisar"
 
 
 @dataclass(slots=True)
@@ -81,8 +82,18 @@ def _timeout() -> float:
 
 
 def _endpoint() -> str:
-    # Garante endpoint configurável sem barras duplicadas.
-    return os.getenv("NEURON_API_ENDPOINT", DEFAULT_ENDPOINT).rstrip("/")
+    # Garante endpoint configurável usando apenas a base URL mais o path.
+    base_url = os.getenv("NEURON_API_BASE_URL")
+    legacy_endpoint = os.getenv("NEURON_API_ENDPOINT")
+    if base_url:
+        base = base_url.rstrip("/")
+        path = os.getenv("NEURON_API_ANALISE_PATH", DEFAULT_ANALISE_PATH)
+        if not path.startswith("/"):
+            path = f"/{path}"
+        return f"{base}{path}"
+    if legacy_endpoint:
+        return legacy_endpoint.rstrip("/")
+    return f"{DEFAULT_BASE_URL}{DEFAULT_ANALISE_PATH}"
 
 
 def _build_payload(texto: str, usuario_id: int | None) -> dict[str, Any]:

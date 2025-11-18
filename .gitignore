@@ -8,6 +8,7 @@ exports/
 # Arquivos de configuração sensíveis
 .env
 .env.*
+!.env.example
 
 # Sistemas operacionais/IDE
 .DS_Store

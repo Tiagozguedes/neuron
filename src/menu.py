@@ -6,6 +6,7 @@ from typing import Callable
 
 from actors import acessos, categorias_emocao, departamentos, emocoes, registros_emocao, respostas_formulario, usuarios
 from actors.checkins import realizar_checkin_emocional
+from connect.connect import verificar_conexao_oracle
 from utils import input_opcao, limpar_tela, pausar, titulo
 
 MenuAction = Callable[[], None]
@@ -13,11 +14,20 @@ MenuAction = Callable[[], None]
 
 def main() -> None:
     """Exibe o menu principal agrupando as funcionalidades por intenção."""
+    try:
+        oracle_status = verificar_conexao_oracle()
+    except RuntimeError as exc:
+        limpar_tela()
+        print("Não foi possível iniciar porque o Oracle não respondeu.")
+        print(exc)
+        pausar("Pressione Enter para sair...")
+        return
     while True:
         limpar_tela()
         print("===========================================")
         print("        SISTEMA NEURON — MENU PRINCIPAL    ")
         print("===========================================\n")
+        print(f"{oracle_status}\n")
         print("1. Cadastros básicos")
         print("2. Realizar check-in emocional (envia seu relato para a IA)")
         print("3. Consultas e relatórios agregados de emoções")

@@ -9,6 +9,7 @@ from .helpers import (
     limpar_tela,
     pausar,
     solicitar_confirmacao,
+    solicitar_data,
     solicitar_decimal,
     solicitar_inteiro,
     solicitar_texto,
@@ -27,5 +28,6 @@ __all__ = [
     "solicitar_texto",
     "solicitar_inteiro",
     "solicitar_decimal",
+    "solicitar_data",
     "fluxo_cli",
 ]

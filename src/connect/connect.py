@@ -15,6 +15,7 @@ except ModuleNotFoundError:  # pragma: no cover
 
 
 load_dotenv()  # carrega variáveis definidas em .env (se existir)
+_CONNECTION_STATUS: str | None = None
 
 
 def _obter_conn() -> "oracledb.Connection":
@@ -67,6 +68,22 @@ def _cursor():
         conn.close()
 
 
+@contextmanager
+def transaction():
+    """Disponibiliza um cursor compartilhado para executar múltiplas operações atômicas."""
+    conn = _obter_conn()
+    cursor = conn.cursor()
+    try:
+        yield cursor
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        cursor.close()
+        conn.close()
+
+
 def run_execute(sql: str, params: dict[str, Any]) -> int:
     """Executa INSERT/UPDATE/DELETE e retorna linhas afetadas."""
     # Usado pelos CRUDs para disparar instruções que modificam dados.
@@ -82,3 +99,31 @@ def run_query(sql: str, params: dict[str, Any] | None = None) -> list[dict[str, 
         cursor.execute(sql, params or {})
         columns = [col[0].lower() for col in cursor.description]
         return [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+
+def verificar_conexao_oracle() -> str:
+    """Tenta realizar um SELECT simples para garantir que o Oracle esteja acessível."""
+    global _CONNECTION_STATUS
+    if _CONNECTION_STATUS:
+        return _CONNECTION_STATUS
+    conn = None
+    cursor = None
+    try:
+        conn = _obter_conn()
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1 FROM DUAL")
+        cursor.fetchone()
+        usuario = os.getenv("ORACLE_USER", "user")
+        dsn = _build_dsn()
+        _CONNECTION_STATUS = f"Conexão com Oracle ativa (usuário {usuario} @ {dsn})"
+        return _CONNECTION_STATUS
+    except Exception as exc:  # pragma: no cover - tratado em nível superior
+        raise RuntimeError(
+            "Não foi possível conectar ao Oracle. "
+            "Verifique as variáveis ORACLE_* e se o banco está acessível a partir desta máquina."
+        ) from exc
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if conn is not None:
+            conn.close()

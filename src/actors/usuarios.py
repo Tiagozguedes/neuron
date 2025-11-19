@@ -12,30 +12,32 @@ TABELA = "T_NRON_USUARIO"
 STATUS_LABELS = {"A": "Ativo", "I": "Inativo"}
 
 
-def _mostrar_opcoes_acesso() -> None:
+def _mostrar_opcoes_acesso(cabecalho: str = "\nTipos de acesso disponíveis:") -> bool:
     linhas = run_query(
         "SELECT ID_ACESSO, TP_ACESSO, DS_ACESSO FROM T_NRON_ACESSO ORDER BY ID_ACESSO",
         {},
     )
     if not linhas:
         print("Nenhum tipo de acesso cadastrado. Use o menu 3 para criar antes de prosseguir.")
-        return
-    print("\nTipos de acesso disponíveis:")
+        return False
+    print(cabecalho)
     for linha in linhas:
         print(f"  {linha['id_acesso']:>3} | {linha['tp_acesso']:<15} | {linha['ds_acesso']}")
+    return True
 
 
-def _mostrar_opcoes_departamento() -> None:
+def _mostrar_opcoes_departamento(cabecalho: str = "\nDepartamentos disponíveis:") -> bool:
     linhas = run_query(
         "SELECT ID_DEPARTAMENTO, NOME_DEPARTAMENTO FROM T_NRON_DEPARTAMENTO ORDER BY NOME_DEPARTAMENTO",
         {},
     )
     if not linhas:
         print("Nenhum departamento cadastrado. Use o menu 2 para criar antes de prosseguir.")
-        return
-    print("\nDepartamentos disponíveis:")
+        return False
+    print(cabecalho)
     for linha in linhas:
         print(f"  {linha['id_departamento']:>3} | {linha['nome_departamento']}")
+    return True
 
 
 def _parse_data(valor: str) -> date:
@@ -71,16 +73,24 @@ def cadastrar_usuario() -> None:
         status = _solicitar_status("Situação do usuário [A=Ativo, I=Inativo] (padrão A)")
         data_input = solicitar_texto("Data de cadastro (formato DDMMYYYY) [hoje]", obrigatorio=False)
         data_cadastro = _parse_data(data_input) if data_input else date.today()
-        _mostrar_opcoes_acesso()
-        id_acesso = solicitar_inteiro("ID do tipo de acesso listado acima")
-        if not registro_existe("T_NRON_ACESSO", "ID_ACESSO", id_acesso):
-            print("Tipo de acesso inexistente.")
+        if not _mostrar_opcoes_acesso():
             return
-        _mostrar_opcoes_departamento()
-        id_depto = solicitar_inteiro("ID do departamento listado acima")
-        if not registro_existe("T_NRON_DEPARTAMENTO", "ID_DEPARTAMENTO", id_depto):
-            print("Departamento inexistente.")
+        while True:
+            id_acesso = solicitar_inteiro("ID do tipo de acesso listado acima")
+            if registro_existe("T_NRON_ACESSO", "ID_ACESSO", id_acesso):
+                break
+            print("Tipo de acesso inexistente. Informe um dos IDs exibidos acima.")
+            if not _mostrar_opcoes_acesso("\nConfira novamente os tipos de acesso cadastrados:"):
+                return
+        if not _mostrar_opcoes_departamento():
             return
+        while True:
+            id_depto = solicitar_inteiro("ID do departamento listado acima")
+            if registro_existe("T_NRON_DEPARTAMENTO", "ID_DEPARTAMENTO", id_depto):
+                break
+            print("Departamento inexistente. Informe um dos IDs exibidos acima.")
+            if not _mostrar_opcoes_departamento("\nDepartamentos disponíveis (atualizados):"):
+                return
         run_execute(
             """
             INSERT INTO T_NRON_USUARIO (

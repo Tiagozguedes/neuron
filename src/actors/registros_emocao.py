@@ -19,7 +19,7 @@ def cadastrar_registro_emocao() -> None:
         if registro_existe(TABELA, "ID_REGIST_EMOCAO", registro_id):
             print("ID já cadastrado.")
             return
-        intensidade = solicitar_decimal("Intensidade (0-10)")
+        intensidade = solicitar_decimal("Intensidade (0-100)")
         descricao = solicitar_texto("Descrição")
         data_input = solicitar_texto("Data (YYYY-MM-DD)")
         data_registro = datetime.strptime(data_input, "%Y-%m-%d")
@@ -82,7 +82,7 @@ def atualizar_registro_emocao() -> None:
             print("Registro não encontrado.")
             return
         intensidade = solicitar_decimal(
-            f"Intensidade atual ({registro['int_regist_emocao']}) [Enter para manter]",
+            f"Intensidade atual ({registro['int_regist_emocao']}) [Enter para manter | intervalo 0-100]",
             padrao=Decimal(str(registro["int_regist_emocao"])),
         )
         descricao = solicitar_texto(

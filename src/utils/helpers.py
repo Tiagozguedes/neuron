@@ -6,6 +6,7 @@ import os
 import platform
 from contextlib import contextmanager
 from decimal import Decimal
+from datetime import date, datetime
 from typing import Iterator, Sequence
 
 _VOLTAR_KEYWORDS = {"0", "voltar", "sair", "exit", "quit", "retornar", "cancelar", "back"}
@@ -120,6 +121,25 @@ def solicitar_decimal(mensagem: str, padrao: Decimal | None = None) -> Decimal:
             return Decimal(normalizado)
         except Exception:
             print("Não foi possível interpretar o número informado. Tente novamente ou digite 'voltar'.")
+
+
+def solicitar_data(mensagem: str, padrao: date | None = None, *, obrigatorio: bool = True) -> date | None:
+    """Pede uma data no formato DDMMYYYY e devolve um objeto date."""
+    while True:
+        resposta = input(_prompt(mensagem)).strip()
+        if deseja_voltar(resposta):
+            raise OperacaoCancelada()
+        if not resposta:
+            if padrao is not None:
+                return padrao
+            if not obrigatorio:
+                return None
+            print("Informe uma data válida no formato DDMMYYYY ou digite 'voltar'.")
+            continue
+        try:
+            return datetime.strptime(resposta, "%d%m%Y").date()
+        except ValueError:
+            print("Formato inválido. Utilize DDMMYYYY, por exemplo 01022024.")
 
 
 @contextmanager

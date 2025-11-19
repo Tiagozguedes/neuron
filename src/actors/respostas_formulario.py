@@ -19,11 +19,11 @@ def cadastrar_resposta_formulario() -> None:
             print("ID já cadastrado.")
             return
         data_resposta = solicitar_texto("Data da resposta (YYYY-MM-DD)")
-        motivacao = solicitar_decimal("Motivação (0-10)")
-        felicidade = solicitar_decimal("Felicidade (0-10)")
-        estresse = solicitar_decimal("Estresse (0-10)")
+        motivacao = solicitar_decimal("Motivação (0-100)")
+        felicidade = solicitar_decimal("Felicidade (0-100)")
+        estresse = solicitar_decimal("Estresse (0-100)")
         observacao = solicitar_texto("Observações")
-        saude_mental = solicitar_decimal("Saúde mental (0-10)")
+        saude_mental = solicitar_decimal("Saúde mental (0-100)")
         probabilidade = solicitar_decimal("Confiança do modelo (0-100)")
         modelo_versao = solicitar_texto("Versão do modelo")
         data_analise = solicitar_texto("Data da análise (YYYY-MM-DD)")
@@ -107,15 +107,15 @@ def atualizar_resposta_formulario() -> None:
             print("Resposta não encontrada.")
             return
         novo_status_mot = solicitar_decimal(
-            f"Motivação atual ({resposta['mot_resposta']}) [Enter para manter]",
+            f"Motivação atual ({resposta['mot_resposta']}) [Enter para manter | intervalo 0-100]",
             padrao=Decimal(str(resposta["mot_resposta"])),
         )
         nova_felicidade = solicitar_decimal(
-            f"Felicidade atual ({resposta['fel_resposta']}) [Enter para manter]",
+            f"Felicidade atual ({resposta['fel_resposta']}) [Enter para manter | intervalo 0-100]",
             padrao=Decimal(str(resposta["fel_resposta"])),
         )
         novo_estresse = solicitar_decimal(
-            f"Estresse atual ({resposta['est_resposta']}) [Enter para manter]",
+            f"Estresse atual ({resposta['est_resposta']}) [Enter para manter | intervalo 0-100]",
             padrao=Decimal(str(resposta["est_resposta"])),
         )
         nova_observacao = solicitar_texto(
@@ -124,11 +124,11 @@ def atualizar_resposta_formulario() -> None:
             obrigatorio=False,
         )
         nova_saude = solicitar_decimal(
-            f"Saúde mental atual ({resposta['sau_men_resposta']}) [Enter para manter]",
+            f"Saúde mental atual ({resposta['sau_men_resposta']}) [Enter para manter | intervalo 0-100]",
             padrao=Decimal(str(resposta["sau_men_resposta"])),
         )
         nova_prob = solicitar_decimal(
-            f"Confiança atual ({resposta['prob_resposta']}) [Enter para manter]",
+            f"Confiança atual ({resposta['prob_resposta']}) [Enter para manter | intervalo 0-100]",
             padrao=Decimal(str(resposta["prob_resposta"])),
         )
         novo_modelo = solicitar_texto(

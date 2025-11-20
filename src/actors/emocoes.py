@@ -10,6 +10,7 @@ TABELA = "T_NRON_EMOCAO"
 
 
 def _mostrar_categorias_disponiveis() -> None:
+    """Exibe categorias cadastradas para referência ao criar/editar emoções."""
     linhas = run_query(
         "SELECT ID_CATG_EMOCAO, NOME_CATG_EMOCAO FROM T_NRON_CATG_EMOCAO ORDER BY NOME_CATG_EMOCAO",
         {},
@@ -23,7 +24,7 @@ def _mostrar_categorias_disponiveis() -> None:
 
 
 def cadastrar_emocao() -> None:
-    # Coleta dados da emoção (nome/cor/categoria) e insere no Oracle.
+    """Coleta ID/nome/cor/categoria, valida FK e insere nova emoção na tabela."""
     with fluxo_cli("--- Cadastro de Emoção ---", "Erro ao cadastrar emoção"):
         emocao_id = solicitar_inteiro("ID da emoção")
         if registro_existe(TABELA, "ID_EMOCAO", emocao_id):
@@ -47,7 +48,7 @@ def cadastrar_emocao() -> None:
 
 
 def listar_emocoes() -> None:
-    # Lista todas as emoções cadastradas com ordenação alfabética.
+    """Lista emoções cadastradas em ordem alfabética com cor e categoria."""
     with fluxo_cli("--- Emoções ---", "Erro ao listar emoções", mostrar_instrucao=False):
         linhas = run_query(
             "SELECT ID_EMOCAO, NM_EMOCAO, COR_EMOCAO, ID_CATG_EMOCAO FROM T_NRON_EMOCAO ORDER BY NM_EMOCAO",
@@ -64,7 +65,7 @@ def listar_emocoes() -> None:
 
 
 def atualizar_emocao() -> None:
-    # Permite editar atributos da emoção individualmente.
+    """Carrega uma emoção e permite atualizar nome, cor e categoria, validando FK."""
     with fluxo_cli("--- Atualizar Emoção ---", "Erro ao atualizar emoção"):
         emocao_id = solicitar_inteiro("ID da emoção")
         emocao = buscar_por_id(TABELA, "ID_EMOCAO", emocao_id)
@@ -99,7 +100,7 @@ def atualizar_emocao() -> None:
 
 
 def excluir_emocao() -> None:
-    # Remove uma emoção já existente após confirmação do usuário.
+    """Exclui uma emoção existente após confirmação do usuário."""
     with fluxo_cli("--- Excluir Emoção ---", "Erro ao excluir emoção"):
         emocao_id = solicitar_inteiro("ID da emoção")
         if not buscar_por_id(TABELA, "ID_EMOCAO", emocao_id):

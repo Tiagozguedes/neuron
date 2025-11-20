@@ -217,6 +217,7 @@ def _ranking_estresse_departamentos() -> None:
 
 
 def _formatar_decimal(valor: Any) -> str:
+    """Converte Decimals para string e retorna '-' para nulos."""
     if valor is None:
         return "-"
     return str(valor)
@@ -291,6 +292,7 @@ def _selecionar_departamento() -> int | None:
 
 
 def _formatar_periodo(valor: Any) -> str:
+    """Normaliza datas/periodos retornados pelo Oracle para exibição."""
     if isinstance(valor, datetime):
         return valor.strftime("%Y-%m-%d")
     if isinstance(valor, date):

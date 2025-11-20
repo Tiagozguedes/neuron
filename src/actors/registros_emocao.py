@@ -13,7 +13,7 @@ TABELA = "T_NRON_REGIST_EMOCAO"
 
 
 def cadastrar_registro_emocao() -> None:
-    # Fluxo de inserção manual de registros (usado por administradores).
+    """Cadastro manual de registro emocional: coleta intensidade, descrição, data e FK de emoção."""
     with fluxo_cli("--- Cadastro de Registro de Emoção ---", "Erro ao cadastrar registro"):
         registro_id = solicitar_inteiro("ID do registro")
         if registro_existe(TABELA, "ID_REGIST_EMOCAO", registro_id):
@@ -49,7 +49,7 @@ def cadastrar_registro_emocao() -> None:
 
 
 def listar_registros_emocao() -> None:
-    # Mostra o histórico em ordem cronológica inversa.
+    """Lista registros emocionais em ordem cronológica decrescente."""
     with fluxo_cli("--- Registros de Emoção ---", "Erro ao listar registros", mostrar_instrucao=False):
         linhas = run_query(
             """
@@ -74,7 +74,7 @@ def listar_registros_emocao() -> None:
 
 
 def atualizar_registro_emocao() -> None:
-    # Permite ajustar detalhes (intensidade, descrição, data, emoção).
+    """Permite editar intensidade, descrição, data e emoção vinculada de um registro existente."""
     with fluxo_cli("--- Atualizar Registro de Emoção ---", "Erro ao atualizar registro"):
         registro_id = solicitar_inteiro("ID do registro")
         registro = buscar_por_id(TABELA, "ID_REGIST_EMOCAO", registro_id)
@@ -120,7 +120,7 @@ def atualizar_registro_emocao() -> None:
 
 
 def excluir_registro_emocao() -> None:
-    # Exclui o registro solicitado após confirmação (limpeza de dados).
+    """Exclui um registro emocional após validação e confirmação do usuário."""
     with fluxo_cli("--- Excluir Registro de Emoção ---", "Erro ao excluir registro"):
         registro_id = solicitar_inteiro("ID do registro")
         if not buscar_por_id(TABELA, "ID_REGIST_EMOCAO", registro_id):

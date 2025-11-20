@@ -70,7 +70,7 @@ def realizar_checkin_emocional() -> None:
 
 
 def _coletar_relato() -> str:
-    # Lê múltiplas linhas até o usuário enviar Enter vazio e devolve o texto consolidado.
+    """Coleta múltiplas linhas do relato até Enter vazio ou comando de retorno e devolve o texto."""
     print(
         "\nConte como está seu momento (use frases completas). "
         "Pressione Enter em branco para finalizar (nada será salvo) ou digite 'voltar' para cancelar.\n",
@@ -153,6 +153,7 @@ def _resolver_emocao_id(relatorio: EmotionReport) -> int | None:
 
 
 def _listar_emocoes_disponiveis() -> None:
+    """Lista emoções cadastradas para ajudar na seleção manual do ID."""
     linhas = listar_emocoes()
     if not linhas:
         print("Nenhuma emoção cadastrada.")

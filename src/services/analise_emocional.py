@@ -69,6 +69,7 @@ def analisar_texto(texto: str, usuario_id: int | None = None) -> EmotionReport:
 
 
 def _processar_mensagem(item: Mapping[str, Any] | Any) -> MensagemAnalise:
+    """Valida a entrada, normaliza texto e traduz o resultado bruto da heurística em MensagemAnalise."""
     if not isinstance(item, Mapping):
         raise AnaliseEmocionalError("Cada mensagem deve ser um dicionário com o campo 'texto'.")
     texto = str(item.get("texto") or item.get("text") or "").strip()
@@ -93,9 +94,10 @@ def _processar_mensagem(item: Mapping[str, Any] | Any) -> MensagemAnalise:
 
 
 def _construir_relatorio(mensagens: Sequence[MensagemAnalise]) -> EmotionReport:
+    """Combina mensagens analisadas em um relatório consolidado com métricas e insights."""
     referencia = mensagens[0]
-    emocao_distribuicao = _combinar_emocoes(mensagens, referencia)
-    sentimentos_distribuicao = _combinar_sentimentos(mensagens, referencia)
+    emocao_distribuicao = _combinar_emocoes(mensagens, referencia)  # mistura scores das mensagens
+    sentimentos_distribuicao = _combinar_sentimentos(mensagens, referencia)  # idem para sentimentos
     emocao_nome = _selecionar_principal(emocao_distribuicao) or (referencia.emocao or "Neutro")
     resumo = _montar_resumo(referencia, emocao_distribuicao)
     motivacao, felicidade, estresse, energia = _calcular_metricas(emocao_distribuicao, referencia)
@@ -127,6 +129,7 @@ def _construir_relatorio(mensagens: Sequence[MensagemAnalise]) -> EmotionReport:
 
 
 def _montar_resumo(mensagem: MensagemAnalise, distrib: Mapping[str, Decimal]) -> str:
+    """Gera um texto curto destacando emoções/sentimento e trecho do relato."""
     partes: list[str] = []
     if distrib:
         principais = sorted(distrib.items(), key=lambda item: item[1], reverse=True)[:3]
@@ -143,6 +146,7 @@ def _montar_resumo(mensagem: MensagemAnalise, distrib: Mapping[str, Decimal]) ->
 
 
 def _calcular_metricas(distrib: Mapping[str, Decimal], referencia: MensagemAnalise) -> tuple[Decimal, Decimal, Decimal, Decimal]:
+    """Converte distribuição de emoções em métricas numéricas ponderadas (0-100)."""
     if not distrib and referencia.emocao:
         distrib = {referencia.emocao: Decimal("100")}
     if not distrib:

@@ -13,6 +13,7 @@ STATUS_LABELS = {"A": "Ativo", "I": "Inativo"}
 
 
 def _mostrar_opcoes_acesso(cabecalho: str = "\nTipos de acesso disponíveis:") -> bool:
+    """Lista os acessos disponíveis para ajudar na escolha e retorna False se não houver registros."""
     linhas = run_query(
         "SELECT ID_ACESSO, TP_ACESSO, DS_ACESSO FROM T_NRON_ACESSO ORDER BY ID_ACESSO",
         {},
@@ -27,6 +28,7 @@ def _mostrar_opcoes_acesso(cabecalho: str = "\nTipos de acesso disponíveis:") -
 
 
 def _mostrar_opcoes_departamento(cabecalho: str = "\nDepartamentos disponíveis:") -> bool:
+    """Lista departamentos cadastrados para referência e retorna False se a tabela estiver vazia."""
     linhas = run_query(
         "SELECT ID_DEPARTAMENTO, NOME_DEPARTAMENTO FROM T_NRON_DEPARTAMENTO ORDER BY NOME_DEPARTAMENTO",
         {},
@@ -41,7 +43,7 @@ def _mostrar_opcoes_departamento(cabecalho: str = "\nDepartamentos disponíveis:
 
 
 def _parse_data(valor: str) -> date:
-    # Converte string no formato DDMMYYYY para objeto date.
+    """Converte uma string DDMMYYYY em objeto date, validando formato."""
     valor = valor.strip()
     if len(valor) != 8 or not valor.isdigit():
         raise ValueError("Informe a data no formato DDMMYYYY (ex.: 01012024).")
@@ -61,7 +63,7 @@ def _solicitar_status(mensagem: str, padrao: str = "A") -> str:
 
 
 def cadastrar_usuario() -> None:
-    # Responsável por cadastrar um colaborador/gestor informando acessos e departamento.
+    """Cadastra um colaborador, validando status, acesso e departamento antes de inserir no Oracle."""
     with fluxo_cli("--- Cadastro de Usuário ---", "Erro ao cadastrar usuário"):
         usuario_id = solicitar_inteiro("ID do usuário")
         if registro_existe(TABELA, "ID_USUARIO", usuario_id):
@@ -116,7 +118,7 @@ def cadastrar_usuario() -> None:
 
 
 def listar_usuarios() -> None:
-    # Lista todos os usuários ordenados por nome para consulta rápida.
+    """Exibe todos os usuários ordenados por nome, incluindo status e datas formatadas."""
     with fluxo_cli("--- Usuários ---", "Erro ao listar usuários", mostrar_instrucao=False):
         linhas = run_query(
             """
@@ -144,7 +146,7 @@ def listar_usuarios() -> None:
 
 
 def atualizar_usuario() -> None:
-    # Permite alterar status, perfis e senha de um usuário existente.
+    """Permite atualizar dados de um usuário (status, acesso, departamento e senha) mantendo o ID."""
     with fluxo_cli("--- Atualizar Usuário ---", "Erro ao atualizar usuário"):
         usuario_id = solicitar_inteiro("ID do usuário")
         usuario = buscar_por_id(TABELA, "ID_USUARIO", usuario_id)
@@ -196,7 +198,7 @@ def atualizar_usuario() -> None:
 
 
 def excluir_usuario() -> None:
-    # Remove usuário específico após a confirmação de exclusão.
+    """Remove um usuário específico após validar existência e confirmar a operação."""
     with fluxo_cli("--- Excluir Usuário ---", "Erro ao excluir usuário"):
         usuario_id = solicitar_inteiro("ID do usuário")
         if not buscar_por_id(TABELA, "ID_USUARIO", usuario_id):

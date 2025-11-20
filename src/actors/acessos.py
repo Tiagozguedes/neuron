@@ -10,8 +10,7 @@ TABELA = "T_NRON_ACESSO"
 
 
 def cadastrar_acesso() -> None:
-    """Cria um novo tipo de acesso."""
-    # Solicita dados no terminal e insere um novo tipo de acesso.
+    """Solicita ID/tipo/descrição, checa duplicidade e insere um novo perfil de acesso."""
     with fluxo_cli("--- Cadastro de Tipo de Acesso ---", "Erro ao cadastrar tipo de acesso"):
         id_acesso = solicitar_inteiro("ID do acesso")
         if registro_existe(TABELA, "ID_ACESSO", id_acesso):
@@ -30,8 +29,7 @@ def cadastrar_acesso() -> None:
 
 
 def listar_acessos() -> None:
-    """Lista todos os tipos de acesso."""
-    # Executa SELECT simples e imprime tabela formatada.
+    """Busca todos os tipos de acesso e imprime de forma tabulada."""
     with fluxo_cli("--- Tipos de Acesso ---", "Erro ao listar acessos", mostrar_instrucao=False):
         linhas = run_query(
             "SELECT ID_ACESSO, TP_ACESSO, DS_ACESSO FROM T_NRON_ACESSO ORDER BY ID_ACESSO",
@@ -45,8 +43,7 @@ def listar_acessos() -> None:
 
 
 def atualizar_acesso() -> None:
-    """Atualiza descrição e tipo."""
-    # Recupera registro existente e permite alterar tipo/descrição.
+    """Carrega um acesso existente e permite alterar tipo/descrição mantendo o ID."""
     with fluxo_cli("--- Atualizar Tipo de Acesso ---", "Erro ao atualizar"):
         id_acesso = solicitar_inteiro("ID do acesso")
         acesso = buscar_por_id(TABELA, "ID_ACESSO", id_acesso)
@@ -74,8 +71,7 @@ def atualizar_acesso() -> None:
 
 
 def excluir_acesso() -> None:
-    """Remove um tipo de acesso."""
-    # Pergunta o ID e remove o registro após confirmação do usuário.
+    """Remove um tipo de acesso após confirmar e validar existência."""
     with fluxo_cli("--- Excluir Tipo de Acesso ---", "Erro ao excluir tipo de acesso"):
         id_acesso = solicitar_inteiro("ID do acesso")
         if not buscar_por_id(TABELA, "ID_ACESSO", id_acesso):

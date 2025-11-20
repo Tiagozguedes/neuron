@@ -12,13 +12,14 @@ _TOKEN_RE = re.compile(r"[a-z0-9]+")
 
 
 def _normalizar(texto: str) -> str:
-    # Remove acentos e converte para minúsculas para facilitar comparações lexicais.
+    """Remove acentos e converte para minúsculas para facilitar matching lexical."""
     decomposed = unicodedata.normalize("NFD", texto.lower())
     sem_acentos = "".join(ch for ch in decomposed if unicodedata.category(ch) != "Mn")
     return sem_acentos
 
 
 def _normalizar_lista(palavras: Iterable[str]) -> tuple[str, ...]:
+    """Normaliza múltiplas palavras, descartando entradas vazias."""
     retorno: list[str] = []
     for palavra in palavras:
         normalizada = _normalizar(palavra)
@@ -44,6 +45,7 @@ class EmotionProfile:
     energia_base: int = 55
 
     def __post_init__(self) -> None:
+        # Pré-processa listas para comparar tokens já normalizados (sem acento/minúsculo).
         object.__setattr__(self, "palavras", _normalizar_lista(self.palavras))
         object.__setattr__(self, "expressoes", tuple(_normalizar(frase) for frase in self.expressoes))
         pesos_norm: dict[str, float] = {}
@@ -54,6 +56,7 @@ class EmotionProfile:
         object.__setattr__(self, "pesos_personalizados", pesos_norm)
 
     def peso_para_palavra(self, token: str) -> float:
+        """Retorna peso customizado para um token ou o peso padrão da emoção."""
         return self.pesos_personalizados.get(token, self.peso_palavra)
 
 
@@ -291,16 +294,16 @@ _SENTIMENTO_KEYWORDS_NORMALIZADOS = {
 def analisar_texto_local(texto: str) -> Dict[str, object]:
     """Aplica a heurística local baseada em perfis e pesos configuráveis."""
     texto = texto or ""
-    normalizado = _normalizar(texto)
-    tokens = _tokenizar(normalizado)
-    contagem_tokens = Counter(tokens)
-    emocao_scores = _calcular_scores_emocionais(contagem_tokens, normalizado)
+    normalizado = _normalizar(texto)  # limpeza para matcher acentos/pontuação
+    tokens = _tokenizar(normalizado)  # separa em palavras para contar frequências
+    contagem_tokens = Counter(tokens)  # frequência por token para ponderar pesos
+    emocao_scores = _calcular_scores_emocionais(contagem_tokens, normalizado)  # soma pesos por perfil
     if not emocao_scores:
         emocao = "Neutro"
     else:
         emocao = max(emocao_scores, key=emocao_scores.get)
-    sentimento_scores = _consolidar_sentimentos(tokens, emocao_scores)
-    sentimento = _selecionar_principal(sentimento_scores) or "neutro"
+    sentimento_scores = _consolidar_sentimentos(tokens, emocao_scores)  # mistura palavras + emoção predominante
+    sentimento = _selecionar_principal(sentimento_scores) or "neutro"  # fallback neutro se nada encontrado
     return {
         "emocao": emocao,
         "sentimento": sentimento,
@@ -316,9 +319,11 @@ def _calcular_scores_emocionais(contagem_tokens: Counter[str], texto_normalizado
         score = 0.0
         for token, ocorrencias in contagem_tokens.items():
             if token in perfil.palavras:
+                # Cada ocorrência multiplica o peso da emoção (personalizado ou padrão).
                 score += perfil.peso_para_palavra(token) * ocorrencias
         for expressao in perfil.expressoes:
             if expressao and expressao in texto_normalizado:
+                # Expressões completas têm peso fixo mais alto.
                 score += perfil.peso_expressao
         if score > 0:
             scores[perfil.nome] = round(score, 4)
@@ -336,17 +341,20 @@ def _consolidar_sentimentos(tokens: Sequence[str], emocao_scores: Mapping[str, f
         perfil = _PROFILE_LOOKUP.get(emocao.lower())
         if not perfil or percentual <= 0:
             continue
-        contagem[perfil.sentimento] += percentual / 25  # peso moderado da emoção na decisão final.
+        # Cada emoção contribui moderadamente (1/25) para reforçar o sentimento correspondente.
+        contagem[perfil.sentimento] += percentual / 25
     return _normalizar_counter(contagem)
 
 
 def _selecionar_principal(scores: Mapping[str, float]) -> str | None:
+    """Retorna a chave de maior score ou None."""
     if not scores:
         return None
     return max(scores.items(), key=lambda item: item[1])[0]
 
 
 def _normalizar_scores(scores: Mapping[str, float]) -> Dict[str, float]:
+    """Converte scores absolutos em percentuais mantendo a soma em 100."""
     total = sum(scores.values())
     if not total:
         return {}
@@ -354,6 +362,7 @@ def _normalizar_scores(scores: Mapping[str, float]) -> Dict[str, float]:
 
 
 def _normalizar_counter(contagem: Counter[str]) -> Dict[str, float]:
+    """Normaliza um Counter para percentuais."""
     total = sum(contagem.values())
     if not total:
         return {}
@@ -361,6 +370,7 @@ def _normalizar_counter(contagem: Counter[str]) -> Dict[str, float]:
 
 
 def _tokenizar(texto: str) -> tuple[str, ...]:
+    """Extrai tokens alfanuméricos em minúsculo preservando ordem."""
     if not texto:
         return tuple()
     return tuple(_TOKEN_RE.findall(texto))

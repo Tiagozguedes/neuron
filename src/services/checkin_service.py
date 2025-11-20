@@ -47,6 +47,7 @@ def _persistir_resposta(
     registro_id: int,
     cursor,
 ) -> int:
+    """Insere uma resposta de formulário vinculada ao registro emocional dentro da transação."""
     resposta_id = proximo_id("T_NRON_RESP_FORMULARIO", "ID_RESPOSTA")
     agora = _normalizar_datetime(datetime.now(timezone.utc))
     observacao = relatorio.resumo or relato_texto
@@ -103,6 +104,7 @@ def _persistir_resposta(
 
 
 def _criar_registro_emocao(emocao_id: int, relatorio: EmotionReport, cursor) -> int:
+    """Cria o registro emocional base com intensidade, descrição resumida e data da análise."""
     registro_id = proximo_id("T_NRON_REGIST_EMOCAO", "ID_REGIST_EMOCAO")
     descricao_base = relatorio.resumo or f"Emoção predominante: {relatorio.emocao_nome}"
     descricao = (descricao_base or "")[:255]

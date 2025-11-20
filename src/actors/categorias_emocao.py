@@ -10,7 +10,7 @@ TABELA = "T_NRON_CATG_EMOCAO"
 
 
 def cadastrar_categoria() -> None:
-    # Responsável por coletar ID/nome e inserir a categoria.
+    """Coleta ID/nome, valida duplicidade e insere a categoria de emoção."""
     with fluxo_cli("--- Cadastro de Categoria de Emoção ---", "Erro ao cadastrar categoria"):
         categoria_id = solicitar_inteiro("ID da categoria")
         if registro_existe(TABELA, "ID_CATG_EMOCAO", categoria_id):
@@ -28,7 +28,7 @@ def cadastrar_categoria() -> None:
 
 
 def listar_categorias() -> None:
-    # Lista todas as categorias disponíveis, usado para referência em outras telas.
+    """Lista categorias de emoção para referência em cadastros e edições."""
     with fluxo_cli("--- Categorias de Emoção ---", "Erro ao listar categorias", mostrar_instrucao=False):
         linhas = run_query(
             "SELECT ID_CATG_EMOCAO, NOME_CATG_EMOCAO FROM T_NRON_CATG_EMOCAO ORDER BY ID_CATG_EMOCAO",
@@ -42,7 +42,7 @@ def listar_categorias() -> None:
 
 
 def atualizar_categoria() -> None:
-    # Permite renomear uma categoria após recuperar o registro corrente.
+    """Permite renomear uma categoria existente mantendo o ID."""
     with fluxo_cli("--- Atualizar Categoria ---", "Erro ao atualizar categoria"):
         categoria_id = solicitar_inteiro("ID da categoria")
         categoria = buscar_por_id(TABELA, "ID_CATG_EMOCAO", categoria_id)
@@ -66,7 +66,7 @@ def atualizar_categoria() -> None:
 
 
 def excluir_categoria() -> None:
-    # Remove a categoria caso exista e o usuário confirme.
+    """Exclui uma categoria após validar existência e confirmar com o usuário."""
     with fluxo_cli("--- Excluir Categoria ---", "Erro ao excluir categoria"):
         categoria_id = solicitar_inteiro("ID da categoria")
         if not buscar_por_id(TABELA, "ID_CATG_EMOCAO", categoria_id):

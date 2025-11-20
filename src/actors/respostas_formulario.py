@@ -12,7 +12,7 @@ TABELA = "T_NRON_RESP_FORMULARIO"
 
 
 def cadastrar_resposta_formulario() -> None:
-    # Coleta os indicadores retornados pela IA e grava em T_NRON_RESP_FORMULARIO.
+    """Coleta os indicadores retornados pela análise e grava em T_NRON_RESP_FORMULARIO com validações de FK."""
     with fluxo_cli("--- Cadastro de Resposta de Formulário ---", "Erro ao cadastrar resposta"):
         resposta_id = solicitar_inteiro("ID da resposta")
         if registro_existe(TABELA, "ID_RESPOSTA", resposta_id):
@@ -68,7 +68,7 @@ def cadastrar_resposta_formulario() -> None:
 
 
 def listar_respostas_formulario() -> None:
-    # Consulta as respostas ordenadas pela data mais recente para auditoria.
+    """Lista respostas de formulário em ordem decrescente de data para auditoria."""
     with fluxo_cli("--- Respostas de Formulário ---", "Erro ao listar respostas", mostrar_instrucao=False):
         linhas = run_query(
             """
@@ -99,7 +99,7 @@ def listar_respostas_formulario() -> None:
 
 
 def atualizar_resposta_formulario() -> None:
-    # Possibilita ajustar notas/observações e metadados da análise.
+    """Permite alterar notas, observações e metadados de uma resposta existente."""
     with fluxo_cli("--- Atualizar Resposta de Formulário ---", "Erro ao atualizar resposta"):
         resposta_id = solicitar_inteiro("ID da resposta")
         resposta = buscar_por_id(TABELA, "ID_RESPOSTA", resposta_id)
@@ -173,7 +173,7 @@ def atualizar_resposta_formulario() -> None:
 
 
 def excluir_resposta_formulario() -> None:
-    # Remove uma resposta específica mediante confirmação.
+    """Remove uma resposta específica mediante confirmação do usuário."""
     with fluxo_cli("--- Excluir Resposta de Formulário ---", "Erro ao excluir resposta"):
         resposta_id = solicitar_inteiro("ID da resposta")
         if not buscar_por_id(TABELA, "ID_RESPOSTA", resposta_id):

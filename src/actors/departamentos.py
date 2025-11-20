@@ -10,7 +10,7 @@ TABELA = "T_NRON_DEPARTAMENTO"
 
 
 def cadastrar_departamento() -> None:
-    # Recolhe nome/descrição e realiza INSERT na tabela de departamentos.
+    """Recolhe ID/nome/descrição, valida duplicidade e insere o departamento no Oracle."""
     with fluxo_cli("--- Cadastro de Departamento ---", "Erro ao cadastrar departamento"):
         depto_id = solicitar_inteiro("ID do departamento")
         if registro_existe(TABELA, "ID_DEPARTAMENTO", depto_id):
@@ -29,7 +29,7 @@ def cadastrar_departamento() -> None:
 
 
 def listar_departamentos() -> None:
-    # Exibe a tabela ordenada por nome para facilitar consulta.
+    """Lista departamentos ordenados por nome para consulta rápida."""
     with fluxo_cli("--- Departamentos ---", "Erro ao listar departamentos", mostrar_instrucao=False):
         linhas = run_query(
             "SELECT ID_DEPARTAMENTO, NOME_DEPARTAMENTO, DS_DEPARTAMENTO "
@@ -44,7 +44,7 @@ def listar_departamentos() -> None:
 
 
 def atualizar_departamento() -> None:
-    # Permite editar nome/descrição mantendo o restante do registro.
+    """Carrega o departamento e permite atualizar nome e descrição preservando demais campos."""
     with fluxo_cli("--- Atualizar Departamento ---", "Erro ao atualizar departamento"):
         depto_id = solicitar_inteiro("ID do departamento")
         depto = buscar_por_id(TABELA, "ID_DEPARTAMENTO", depto_id)
@@ -74,7 +74,7 @@ def atualizar_departamento() -> None:
 
 
 def excluir_departamento() -> None:
-    # Remove departamento após checar existência e confirmar operação.
+    """Exclui um departamento após validar existência e confirmação do usuário."""
     with fluxo_cli("--- Excluir Departamento ---", "Erro ao excluir departamento"):
         depto_id = solicitar_inteiro("ID do departamento")
         if not buscar_por_id(TABELA, "ID_DEPARTAMENTO", depto_id):
